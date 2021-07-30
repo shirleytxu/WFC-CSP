@@ -141,41 +141,17 @@ void mousePressed() {
     println();
     run();
   }
-}
-
-int findHighestEntropy() { 
-  int max = -1; 
-  int highIndex = 0;
-  int currentIndex = 0;
-  for (int x : entropy) {
-    if (x >= max) {
-      max = x; 
-      highIndex = currentIndex;
-    }
-    currentIndex++;
-  }
-
-  return highIndex;
-}
-
-int[] removeIndex(int[] array, int removeIndex) {
-  int i = array.length-1;
-  int old = array[removeIndex];
-  array[removeIndex] = array[i];
-  array[i] = old;
-  array = shorten(array);
-  return array;
-}
+} 
 
 boolean isPatternViable(IntList currentPattern, ArrayList<IntList> previousPatterns, int row, int col) { 
+  // Returns true if current pattern is viable (overlaps with nearby cells), false if not viable 
   int lastPatternIndex = previousPatterns.size() - 1; 
-  if (col == 0) {
-    // first column
+  if (col == 0) {  // First column
     if (row == 0) {
-      // first column, first row: all patterns valid
+     // First column, first row: all patterns valid
       return true;
     } else {
-      // first column, remaining rows: must check left pattern to validate  
+      // First column, remaining rows: must check left pattern to validate  
       if (previousPatterns.get(lastPatternIndex).get(1) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex).get(3) == currentPattern.get(2)) {
         return true;
       }
@@ -183,16 +159,16 @@ boolean isPatternViable(IntList currentPattern, ArrayList<IntList> previousPatte
     }
   } else 
   {
-    // the rest of column
+    // Remaining columns
     if (row == 0) {
-      // remaining columns, first row: must check left pattern to validate
+      // Remaining columns, first row: must check left pattern to validate
       if (previousPatterns.get(lastPatternIndex).get(1) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex).get(3) == currentPattern.get(2)) {
       
         return true;
       }
       return false;
     } else {
-      // rest column, rest rows
+      // Remaining columns, remaining rows: must check both left pattern and above pattern to validate
       if (previousPatterns.get(lastPatternIndex).get(1) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex).get(3) == currentPattern.get(2)) {
         if (previousPatterns.get(lastPatternIndex + 1 - numCells).get(2) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex + 1 - numCells).get(3) == currentPattern.get(1)) {  
           return true;
@@ -203,7 +179,8 @@ boolean isPatternViable(IntList currentPattern, ArrayList<IntList> previousPatte
   }
 }
 
-ArrayList<IntList> createBiasedList(ArrayList<IntList> viablePatterns) { 
+ArrayList<IntList> createBiasedList(ArrayList<IntList> viablePatterns) {
+  // Create list with all viable patterns, with a bias towards red colored patterns
   ArrayList<IntList> biasedList = new ArrayList<IntList>();
   for (IntList pat : viablePatterns) { 
     for (int p : pat) {
@@ -216,7 +193,6 @@ ArrayList<IntList> createBiasedList(ArrayList<IntList> viablePatterns) {
   return biasedList;
 }
 
-
 /*
 *  Top-level function for running the WFC algorithm.
  */
@@ -228,39 +204,46 @@ void run() {
   grid.createCells(); 
   
   int patternIndex = 0; 
-  IntList previousPattern = patterns.get(patternIndex);
+  IntList previousPattern = patterns.get(patternIndex);    // Store previous pattern
 
   for (int row = 0; row < (numCells - 1); row++) {
     for (int col = 0; col < (numCells - 1); col++) {
-      println("starting at row", row, "col", col);
       ArrayList<IntList> viablePatterns = new ArrayList<IntList>();
 
       for (IntList currentPattern : patterns) {
+        // Loops through all patterns, adds all viable patterns to list 
         boolean viable = isPatternViable(currentPattern, patternsFinal, row, col);
         if (viable) {
           viablePatterns.add(currentPattern);
         }
       } 
+      
+      // If no patterns work, choose a random pattern 
+      if (viablePatterns.size() == 0){
+        int randomIndex = int(random(0, patterns.size()));
+        viablePatterns.add(patterns.get(randomIndex));
+      }
+      
       ArrayList<IntList> biasedList = createBiasedList(viablePatterns);
-
-      print("viablePatterns");
-      printArray(viablePatterns); 
-      println();
-      print("biasedList");
-      printArray(biasedList);
+      
+      // Randomly choose a pattern from list of all viable patterns to use as pattern for this Cell
       int rand = int(random(0, biasedList.size()));
       IntList currentPattern = biasedList.get(rand);
       patternsFinal.add(currentPattern);
       
+      // Upper left cell 
       Cell cell1 = grid.allCells.get(col * numCells + row);
       cell1.setColor(currentPattern.get(0));
 
+      // Upper right cell
       Cell cell2 = grid.allCells.get(col * numCells + row + 1);
       cell2.setColor(currentPattern.get(1));
 
+      // Lower left cell
       Cell cell3 = grid.allCells.get((col+1) * numCells + row);
       cell3.setColor(currentPattern.get(2));
-
+      
+      // Lower right cell
       Cell cell4 = grid.allCells.get((col+1) * numCells + row + 1);
       cell4.setColor(currentPattern.get(3));
       previousPattern = currentPattern;
@@ -268,34 +251,6 @@ void run() {
   }
   grid.display();
 }
-
-
-// int tileNext = findHighestEntropy();
-//while (entropy.length != 0) {
-//int tileNext = findHighestEntropy();
-//int x = tileNext;
-//if (tileNext <= numCells / 2) {
-//   x = (tileNext * 2) - 1;
-// } else {
-//   x = tileNext * 4;
-//}
-
-//Cell cell1 = new Cell();
-//Cell cell2 = allCells.get(x + 1);
-//Cell cell3 = allCells.get(x + numCells);
-// Cell cell4 = allCells.get(x + 1 + numCells);
-//cell1.display();
-//ell2.display();
-//ll3.display();
-//ll4.display();
-// entropy[tileNext] -= 1;
-// if (entropy[tileNext] <= 0) { 
-// entropy = removeIndex(entropy, tileNext);
-// }
-
-// for (int row = 0; row < allCells[
-//}
-
 
 // preprocessing, starting at random 
 /*
@@ -344,8 +299,7 @@ ArrayList<IntList> patternsFromSample() {
       }
     }
   }
-
-  print("patterns", patterns);
+ 
   return patterns;
   // We want all rotations of these patterns
   // We only want unique patterns
