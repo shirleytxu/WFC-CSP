@@ -132,13 +132,7 @@ class Cell {
 void mousePressed() {
   if (mouseButton == LEFT) {
     grid.cycleCellColor(mouseX, mouseY);
-  } else {                                 // Right Click 
-    int counter = 0;                       // For printing output in a square form
-    for (Cell cell : grid.allCells) {
-      counter++;
-      if (counter % numCells == 0) println();
-    }
-    println();
+  } else {         // Right Click 
     run();
   }
 } 
@@ -148,11 +142,11 @@ boolean isPatternViable(IntList currentPattern, ArrayList<IntList> previousPatte
   int lastPatternIndex = previousPatterns.size() - 1; 
   if (col == 0) {  // First column
     if (row == 0) {
-     // First column, first row: all patterns valid
+      // First column, first row: all patterns valid
       return true;
     } else {
-      // First column, remaining rows: must check left pattern to validate  
-      if (previousPatterns.get(lastPatternIndex).get(1) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex).get(3) == currentPattern.get(2)) {
+      // First column, remaining rows: must check above pattern to validate  
+      if (previousPatterns.get(lastPatternIndex + 2 - numCells).get(2) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex + 2 - numCells).get(3) == currentPattern.get(1)) {
         return true;
       }
       return false;
@@ -163,14 +157,14 @@ boolean isPatternViable(IntList currentPattern, ArrayList<IntList> previousPatte
     if (row == 0) {
       // Remaining columns, first row: must check left pattern to validate
       if (previousPatterns.get(lastPatternIndex).get(1) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex).get(3) == currentPattern.get(2)) {
-      
+
         return true;
       }
       return false;
     } else {
       // Remaining columns, remaining rows: must check both left pattern and above pattern to validate
       if (previousPatterns.get(lastPatternIndex).get(1) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex).get(3) == currentPattern.get(2)) {
-        if (previousPatterns.get(lastPatternIndex + 1 - numCells).get(2) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex + 1 - numCells).get(3) == currentPattern.get(1)) {  
+        if (previousPatterns.get(lastPatternIndex + 2 - numCells).get(2) == currentPattern.get(0) && previousPatterns.get(lastPatternIndex + 2 - numCells).get(3) == currentPattern.get(1)) {  
           return true;
         }
       }
@@ -183,8 +177,8 @@ ArrayList<IntList> createBiasedList(ArrayList<IntList> viablePatterns) {
   // Create list with all viable patterns, with a bias towards red colored patterns
   ArrayList<IntList> biasedList = new ArrayList<IntList>();
   for (IntList pat : viablePatterns) { 
+    biasedList.add(pat);  // Add all patterns that work to the list once
     for (int p : pat) {
-      biasedList.add(pat);  // Add all patterns that work to the list once
       if (p == 2) { // If cell is red, add pattern again to increase chances of being picked  
         biasedList.add(pat);
       }
@@ -198,11 +192,11 @@ ArrayList<IntList> createBiasedList(ArrayList<IntList> viablePatterns) {
  */
 void run() {
   ArrayList<IntList> patterns = patternsFromSample();
-  ArrayList<IntList> patternsFinal = new ArrayList<IntList>(numCells * numCells); 
+  ArrayList<IntList> patternsFinal = new ArrayList<IntList>((numCells - 1) * (numCells - 1)); 
   background(50);
   grid = new Grid();
   grid.createCells(); 
-  
+
   int patternIndex = 0; 
   IntList previousPattern = patterns.get(patternIndex);    // Store previous pattern
 
@@ -217,20 +211,20 @@ void run() {
           viablePatterns.add(currentPattern);
         }
       } 
-      
-      // If no patterns work, choose a random pattern 
-      if (viablePatterns.size() == 0){
+
+      // If no patterns are viable, choose a random pattern 
+      if (viablePatterns.size() == 0) {
         int randomIndex = int(random(0, patterns.size()));
         viablePatterns.add(patterns.get(randomIndex));
       }
-      
+
       ArrayList<IntList> biasedList = createBiasedList(viablePatterns);
-      
+
       // Randomly choose a pattern from list of all viable patterns to use as pattern for this Cell
       int rand = int(random(0, biasedList.size()));
       IntList currentPattern = biasedList.get(rand);
       patternsFinal.add(currentPattern);
-      
+
       // Upper left cell 
       Cell cell1 = grid.allCells.get(col * numCells + row);
       cell1.setColor(currentPattern.get(0));
@@ -242,7 +236,7 @@ void run() {
       // Lower left cell
       Cell cell3 = grid.allCells.get((col+1) * numCells + row);
       cell3.setColor(currentPattern.get(2));
-      
+
       // Lower right cell
       Cell cell4 = grid.allCells.get((col+1) * numCells + row + 1);
       cell4.setColor(currentPattern.get(3));
@@ -286,20 +280,14 @@ ArrayList<IntList> patternsFromSample() {
       pattern.append(colors.get(col + (row + 1) * numCells));
       pattern.append(colors.get(col + (row + 1) * numCells + 1));
 
-      // For debugging:
-      for (int p : pattern) print (p);
-      println(); 
-
       // Is the new pattern unique? If so, then add it to patterns:
       int patternIndex = findPatternIndex(patterns, pattern); 
       if (patternIndex == -1) {
         patterns.add(pattern);
-      } else {
-        entropy[patternIndex] += 1;
       }
     }
   }
- 
+
   return patterns;
   // We want all rotations of these patterns
   // We only want unique patterns
