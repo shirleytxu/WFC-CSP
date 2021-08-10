@@ -33,17 +33,21 @@ def findMaxLetter(S):
             if firstLetter == True:
                 maxLetter = letter
 
-def findLetterFreq(arr):
-    allLetters = [arr[0]]
-    letterFreq = [1]
-    letterIndexes = []
-    for letter in arr:
-        if letter not in allLetters:
-            allLetters.append(letter)
-            letterFreq.append(1)
-        else:
-            letterFreq[]
+def findLetterFreq(S, alphabet):
+    allLetterFreq = []
 
+    for alphabetLetterIndex in range(len(alphabet)):
+        init = []
+        for columnIndex in range(len(S[alphabetLetterIndex])):
+            init.append(0)
+        allLetterFreq.append(init)
+
+    for letterIndex in range(len(S)):
+        for columnIndex in range(len(S[letterIndex])):
+            for alphabetLetterIndex in range(len(alphabet)):
+                if S[letterIndex][columnIndex] == alphabet[alphabetLetterIndex]:
+                    allLetterFreq[alphabetLetterIndex][columnIndex] += 1
+    return allLetterFreq
 
 def findMaxLetter(arr):
     firstTime = True
@@ -68,10 +72,6 @@ def main():
     print("Answer: ", answer)
     print("S: ", S)
 
-    allMaxLetters = []
-    allMaxFreq = []
-
-    for letterIndex in range(stringLength):
-        findMaxLetter(S[letterIndex])
-
+    allLetterFreq = findLetterFreq(S, alphabet)
+    print("allLetterFreq: ", allLetterFreq)
 main()
