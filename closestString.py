@@ -187,20 +187,25 @@ def calculateDistancesWithInputStrings(answer, inputStrings):
 
 def getMaxDistStr(strDistArray):
     maxDist=strDistArray[0][1]
-    until = 0
+    count = 0
     #print("strDistArray", strDistArray)
     for string, distance in strDistArray:
         if distance == maxDist:
-            until += 1
-    pick = random.randrange(until)
+            count += 1
+    pick = random.randrange(count)
     return strDistArray[pick]
 
 def findMaxLetters(maxDistanceInputString, scoreboard):
     maxLetters = []
     for position, letter, score in scoreboard:
         if maxDistanceInputString[position] == letter:
-          maxLetters.append([letter, position])
-    return random.choice(maxLetters)
+          maxLetters.append([position, letter, score])
+    maxDist = maxLetters[0][2]
+    maxDistLetters = []
+    for letter in maxLetters:
+        if letter[2] == maxDist:
+            maxDistLetters.append(letter)
+    return random.choice(maxDistLetters)
 
 def findClosestString(alphabet, inputStrings, maximumDistance):
     # all string are of same length
@@ -234,11 +239,12 @@ def findClosestString(alphabet, inputStrings, maximumDistance):
         maxLetter = findMaxLetters(maxDistanceInputString, scoreboard)
         #print("maxLetter", maxLetter)# found, update the answer
         #print("found position %d, letter '%s'" % (position, letter))
-        answer[maxLetter[1]] = maxLetter[0]
+        #maxLetter has [position, letter, score]
+        answer[maxLetter[0]] = maxLetter[1]
         #print("answer = ", answer)
 
         # remove position from undecided positions
-        undecidedPositions.remove(maxLetter[1])
+        undecidedPositions.remove(maxLetter[0])
 
     return answer
 
