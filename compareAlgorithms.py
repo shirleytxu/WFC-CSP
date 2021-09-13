@@ -1,6 +1,10 @@
 import random
-import math
 import pickle
+import sys
+import timeit
+
+NOT_FOUND = "not found"
+
 
 def createRandomTestCase(alphabet, numStrings, stringLength, maxDistance):
     """
@@ -154,9 +158,9 @@ def calculateScoreboard(letterFreqTable, positions):
     return scoreboard
 
 
-def printLetterFreqTable(letterFreqTable):
-    for position in range(len(letterFreqTable)):
-        print("pos: %2d, freq: %s" % (position, letterFreqTable[position]))
+#def printLetterFreqTable(letterFreqTable):
+   # for position in range(len(letterFreqTable)):
+     #   print("pos: %2d, freq: %s" % (position, letterFreqTable[position]))
 
 
 def calculateDistance(string1, string2):
@@ -188,7 +192,7 @@ def calculateDistancesWithInputStrings(answer, inputStrings):
 def getMaxDistStr(strDistArray):
     maxDist=strDistArray[0][1]
     count = 0
-    print("strDistArray", strDistArray)
+    #print("strDistArray", strDistArray)
     for string, distance in strDistArray:
         if distance == maxDist:
             count += 1
@@ -210,7 +214,7 @@ def findMaxLetters(maxDistanceInputString, scoreboard):
 def findClosestString(alphabet, inputStrings, maximumDistance):
     # all string are of same length
     stringLength = len(inputStrings[0])
-
+    success = True
     letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
 
     # create initial answer with all SPACE
@@ -219,48 +223,45 @@ def findClosestString(alphabet, inputStrings, maximumDistance):
 
     while len(undecidedPositions) > 0:
         # there is at least 1 undecided positions
-        print()
-        print("current undecided position:", len(undecidedPositions), undecidedPositions)
+        # print()
+        # print("current undecided position:", len(undecidedPositions), undecidedPositions)
 
         scoreboard = calculateScoreboard(letterFreqTable, undecidedPositions)
-        print("current scoreboard:", scoreboard)
+        # print("current scoreboard:", scoreboard)
 
         # sort and find string with maximum distance to current answer
         inputStringDistances = calculateDistancesWithInputStrings(answer, inputStrings)
 
         # first string is the one with maximum distance to the answer
-        maxDistanceInputStringIndex, maxDistance = getMaxDistStr(inputStringDistances)
+        maxDistanceInputStringIndex, maxDistance = inputStringDistances[0]
         maxDistanceInputString = inputStrings[maxDistanceInputStringIndex]
-        print("current string with maximum Distance: ", maxDistanceInputString, maxDistance)
+        # print("current string with maximum Distance: ", maxDistanceInputStringIndex, maxDistanceInputString, maxDistance)
 
         # find the 1st (position, letter) in scoreboard  that matches
         # maxDistanceInputString
-
         maxLetter = findMaxLetters(maxDistanceInputString, scoreboard)
-        print("maxLetter", maxLetter)# found, update the answer
-        print("found position %d, letter '%s'" % (maxLetter[0], maxLetter[1]))
+        #print("maxLetter", maxLetter)# found, update the answer
+        #print("found position %d, letter '%s'" % (maxLetter[0], maxLetter[1]))
         #maxLetter has [position, letter, score]
         answer[maxLetter[0]] = maxLetter[1]
-        print("answer = ", answer)
+        #print("answer = ", answer)
 
         # remove position from undecided positions
         undecidedPositions.remove(maxLetter[0])
 
     return answer
 
-
 def checkTestCase(numStrings, inputStrings, answer, alphabet, k):
-    for inputStringIndex in range(numStrings):
+    """for inputStringIndex in range(numStrings):
         print("input_strings %2d: %s, distance to expected answer: %d" % (
             inputStringIndex, inputStrings[inputStringIndex],
             calculateDistance(answer, inputStrings[inputStringIndex])))
-
-    letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
-    print("letter frequency table:")
-    printLetterFreqTable(letterFreqTable)
-
+letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
+    #print("letter frequency table:")
+    #printLetterFreqTable(letterFreqTable)
+"""
     result = findClosestString(alphabet, inputStrings, k)
-    print("expected answer      : ", answer)
+    """print("expected answer      : ", answer)
     print("Found closest strings: ", result)
     print("Distance between expected answer and result: ", calculateDistance(answer, result))
 
@@ -268,15 +269,15 @@ def checkTestCase(numStrings, inputStrings, answer, alphabet, k):
         print("input_strings %2d: %s, distance to result: %d" % (
             inputStringIndex, inputStrings[inputStringIndex],
             calculateDistance(result, inputStrings[inputStringIndex])))
-
+    """
     inputStringDistances = calculateDistancesWithInputStrings(result, inputStrings)
-    print("maxDistance to result, stringIndex %d, distance: %d" % inputStringDistances[0])
+    #print("maxDistance to result, stringIndex %d, distance: %d" % inputStringDistances[0])
 
     if inputStringDistances[0][1] > k:
         #print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
         return False
     return True
-"""
+
 class ClosestStringTestCase(object):
     def __init__(self, alphabet, numStrings, stringLength, maxDistance):
         self.alphabet = alphabet
@@ -302,47 +303,179 @@ class ClosestStringTestCase(object):
         print("    maxDistance", self.maxDistance)
         print("    answer: ", self.answer)
         print("    inputStrings: ", self.inputStrings)
-"""
 
-def main():
-    alphabet = ["a", "c", "g", "t"]
-    numStrings = 5
-    stringLength = 5
-    k = 2
-    numCases = 0
-    numCasesFailed = 0
+
+def CSd(S, d, s, deltaD):
+    """
+    :param S:   global variable, set of input strings
+    :param d:   global variable, integer d
+    :param s:   candidate string s
+    :param deltaD:  integer detalD
+    :return:    result string or NOT_FOUND
+    """
+
+    # print("CSd s: ", s, "deltaD: ", deltaD)
+    # D0
+    if deltaD < 0:
+        # print("     D0: ", NOT_FOUND)
+        return NOT_FOUND
+
+    # D1
+    for i in range(len(S)):
+        if calculateDistance(s, S[i]) > d + deltaD:
+            # print("     D1: ", NOT_FOUND)
+            return NOT_FOUND
+    # D2
+    sWorks = True
+    for i in range(len(S)):
+        if calculateDistance(s, S[i]) > d:
+            sWorks = False
+    if sWorks:
+        # print("     D2 found: ", s)
+        return s
+
+    # D3
+    inputStringDistances = calculateDistancesWithInputStrings(s, S)
+    # find all stringIndex that Dh(s, si) > d:
+    allSiIndex = []
+    for stringIndex, distance in inputStringDistances:
+        if distance > d:
+            allSiIndex.append(stringIndex)
+
+    # randomly pick some i from allSiIndex
+    i = random.choice(allSiIndex)
+    si = S[i]
+    # print("     D3 si: ", si)
+
+    # find P
+    P = []
+    for p in range(len(s)):
+        if s[p] != si[p]:
+            P.append(p)
+    # print("     D3 P: ", P)
+
+    # randomly choose d+1 from P
+    PPrime = random.sample(P, d+1)
+    # print("     D3 P': ", PPrime)
+
+    for p in PPrime:
+        sPrime = s.copy()
+        sPrime[p] = si[p]
+        sRet = CSd(S, d, sPrime, deltaD-1)
+        if sRet != NOT_FOUND:
+            # print("     D3 found: ", sRet)
+            return sRet
+    # print("      not found: ")
+    return NOT_FOUND
+
+
+def create_working_testcases(alphabet, numStrings, stringLength, k, count):
+    testcases = []
+    while len(testcases) < count:
+        print("create_working_testcases: ", len(testcases))
+        testcase = ClosestStringTestCase(alphabet, numStrings, stringLength, k)
+
+        #result = findClosestString(alphabet, testcase.inputStrings, k)
+        #inputStringDistances = calculateDistancesWithInputStrings(result, testcase.inputStrings)
+        # print("maxDistance to result, stringIndex %d, distance: %d" % inputStringDistances[0])
+
+        testcases.append(testcase)
+
+    return testcases
+
+
+def save_testcases_to_file(testcases, filename):
+    pickle.dump(testcases, open(filename, "wb"))
+
+
+def load_testcases_from_file(filename):
+    return pickle.load(open(filename, "rb"))
+
+
+def compare_algorithms(testcases, k):
+
+    closestStringAlgoStartTime = timeit.default_timer()
+    closestStringAlgoSuccessCount = 0
+    testCaseStatus = 0
     numCasesSaved = 0
-    while numCases < 1:
-        #failedCaseState = random.getstate()
-        answer, inputStrings = createRandomTestCase(alphabet, numStrings, stringLength, k)
-        #answer, inputStrings = createSpecialTestCase2(alphabet, numStrings,stringLength, k, 2)
-        #print("Answer: ", answer)
-        caseResult = checkTestCase(numStrings, inputStrings, answer, alphabet, k)
-        if caseResult is False:
-            numCasesFailed += 1
-        #print("done")
-        numCases += 1
+    for testcase in testcases:
         timesToTryAgain = 0
-        #while caseResult == False and timesToTryAgain <= math.factorial(stringLength):
+
+        # failedCaseState = random.getstate()
+        answer, inputStrings = createRandomTestCase(testcase.alphabet, testcase.numStrings,
+                                                    testcase.stringLength, testcase.maxDistance)
+        # answer, inputStrings = createSpecialTestCase2(alphabet, numStrings,stringLength, k, 2)
+        # print("Answer: ", answer)
+        caseResult = checkTestCase(testcase.numStrings, testcase.inputStrings, testcase.answer, testcase.alphabet,
+                                   testcase.maxDistance)
+        if caseResult:
+            closestStringAlgoSuccessCount += 1
         while caseResult is False and timesToTryAgain <= 10:
             random.shuffle(inputStrings)
-            caseResult = checkTestCase(numStrings, inputStrings, answer,
-                                       alphabet, k)
+            caseResult = checkTestCase(testcase.numStrings, testcase.inputStrings, testcase.answer,
+                                        testcase.alphabet, testcase.maxDistance)
             if caseResult == True:
-                #print("Failed before, now works! Hurray! ")
+                # print("Failed before, now works! Hurray! ")
                 numCasesSaved += 1
                 break
             timesToTryAgain += 1
+        testCaseStatus += 1
+        print(testCaseStatus)
+    closestStringAlgoEndTime = timeit.default_timer()
 
-    print("Out of", numCases, "test cases", numCasesFailed, "cases failed.")
-    print("Saved cases: ", numCasesSaved)
 
-    #random.setstate(failedCaseState)
-    #answer, inputStrings = createRandomTestCase(alphabet, numStrings, stringLength,
-                                               # k)
-    #print("Answer: ", answer)
-    #betterResult = checkTestCase(numStrings, inputStrings, answer, alphabet, k)
+    fixedParameterAlgoStartTime = timeit.default_timer()
+    fixedParameterAlgoSuccessCount = 0
+    for testcase in testcases:
+        fixedParameterAlgoResult = CSd(testcase.inputStrings,
+                                       testcase.maxDistance,
+                                       testcase.inputStrings[0],
+                                       testcase.maxDistance)
+        if fixedParameterAlgoResult != NOT_FOUND:
+            fixedParameterAlgoSuccessCount += 1
+        print(fixedParameterAlgoSuccessCount)
+    fixedParameterAlgoEndTime = timeit.default_timer()
+    print("Fixed Parameter Algorithm Execute Time (%d tests)" % len(testcases),
+          fixedParameterAlgoEndTime - fixedParameterAlgoStartTime)
+    print("Success count-", fixedParameterAlgoSuccessCount)
+    print()
+    print("--")
+    print("Closest String Algorithm Execute Time (%d tests)" % len(testcases),
+          closestStringAlgoEndTime - closestStringAlgoStartTime)
+    print("Success count-", closestStringAlgoSuccessCount)
+    print("Number of cases after retries", numCasesSaved + closestStringAlgoSuccessCount)
+
+def main():
+    alphabet = ["a", "c", "g", "t"]
+    numStrings = 10
+    stringLength = 100
+    k = 10   # maximum Hamming distance
+
+    testcaseCount = 1000
+
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "--generate":
+            assert len(sys.argv) == 3, "Need filename to save generated testcases"
+            filename = sys.argv[2]
+            testcases = create_working_testcases(alphabet, numStrings, stringLength, k, testcaseCount)
+            for testcase in testcases:
+                testcase.print()
+
+            save_testcases_to_file(testcases, filename)
+
+        elif sys.argv[1] == "--load":
+                assert len(sys.argv) == 3, "Need filename to load generated testcases"
+                filename = sys.argv[2]
+                testcases = load_testcases_from_file(filename)
+                for testcase in testcases:
+                    testcase.print()
+
+        elif sys.argv[1] == "--compare":
+            assert len(sys.argv) == 3, "Need filename to load generated testcases"
+            filename = sys.argv[2]
+            testcases = load_testcases_from_file(filename)
+            compare_algorithms(testcases[0:1000], k)
+
 
 if __name__ == "__main__":
     main()
-
