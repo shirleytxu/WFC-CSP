@@ -1,5 +1,4 @@
 # WFC-CSP
 
 
-
-This repository showcases the Wave Function Collapse Closest String Problem algorithm I created for the Pioneer program. I also created a paper to accompany my research. Created Summer 2021. 
+This repository includes my algorithm and research to solve the Closest String Problem using Wave Function Collapse techniques. I created this as a part of the Pioneer program 2021.
