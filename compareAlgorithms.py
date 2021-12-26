@@ -30,7 +30,10 @@ def createRandomTestCase(alphabet, numStrings, stringLength, maxDistance):
         positions_to_change = random.sample(range(stringLength), maxDistance)
         for position in positions_to_change:
             # replace the letter at position with a random letter
+            prevPos = inputString[position]
             inputString[position] = random.choice(alphabet)
+            while prevPos == inputString[position]:
+                inputString[position] = random.choice(alphabet)
 
         # add the changed inputString to results
         testCaseInputStrings.append(inputString)
@@ -65,8 +68,10 @@ def createSpecialTestCase1(alphabet, numStrings, stringLength, maxDistance, coun
         positions_to_change = random.sample(range(stringLength), maxDistance)
         for position in positions_to_change:
             # replace the letter at position with a random letter
+            prevPos = inputString[position]
             inputString[position] = random.choice(alphabet)
-
+            while prevPos == inputString[position]:
+                inputString[position] = random.choice(alphabet)
         # add the changed inputString to results
         if i == 0:
             # repeat the 1st string (numStrings - count) times
@@ -261,6 +266,7 @@ letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
     #printLetterFreqTable(letterFreqTable)
 """
     result = findClosestString(alphabet, inputStrings, k)
+
     """print("expected answer      : ", answer)
     print("Found closest strings: ", result)
     print("Distance between expected answer and result: ", calculateDistance(answer, result))
@@ -274,9 +280,9 @@ letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
     #print("maxDistance to result, stringIndex %d, distance: %d" % inputStringDistances[0])
 
     if inputStringDistances[0][1] > k:
-        #print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
-        return False
-    return True
+        print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
+        return False, result
+    return True, result
 
 class ClosestStringTestCase(object):
     def __init__(self, alphabet, numStrings, stringLength, maxDistance):
@@ -392,6 +398,18 @@ def load_testcases_from_file(filename):
     return pickle.load(open(filename, "rb"))
 
 
+def totalHammingDistance(stringParts, answerString):
+    totalDist = 0
+    print("stringParts", stringParts)
+    print("answerString", answerString)
+    for string in stringParts:
+        for i in range(len(string)):
+            if string[i] != answerString[i]:
+                totalDist += 1
+                print(string[i], answerString[i], totalDist)
+    print("totalDist", totalDist)
+    return totalDist
+
 def compare_algorithms(testcases, k):
 
     closestStringAlgoStartTime = timeit.default_timer()
@@ -402,17 +420,21 @@ def compare_algorithms(testcases, k):
         timesToTryAgain = 0
 
         # failedCaseState = random.getstate()
-        answer, inputStrings = createRandomTestCase(testcase.alphabet, testcase.numStrings,
-                                                    testcase.stringLength, testcase.maxDistance)
+
+        print("testcase max distance:", testcase.maxDistance)
+
+        #answer, inputStrings = createRandomTestCase(testcase.alphabet, testcase.numStrings,
+                                                   # testcase.stringLength, testcase.maxDistance)
         # answer, inputStrings = createSpecialTestCase2(alphabet, numStrings,stringLength, k, 2)
         # print("Answer: ", answer)
-        caseResult = checkTestCase(testcase.numStrings, testcase.inputStrings, testcase.answer, testcase.alphabet,
+        caseResult, caseString = checkTestCase(testcase.numStrings, testcase.inputStrings, testcase.answer, testcase.alphabet,
                                    testcase.maxDistance)
+        print("checkTestCase solution: ", caseString)
         if caseResult:
             closestStringAlgoSuccessCount += 1
         while caseResult is False and timesToTryAgain <= 10:
-            random.shuffle(inputStrings)
-            caseResult = checkTestCase(testcase.numStrings, testcase.inputStrings, testcase.answer,
+            random.shuffle(testcase.inputStrings)
+            caseResult, caseString = checkTestCase(testcase.numStrings, testcase.inputStrings, testcase.answer,
                                         testcase.alphabet, testcase.maxDistance)
             if caseResult == True:
                 # print("Failed before, now works! Hurray! ")
@@ -421,6 +443,12 @@ def compare_algorithms(testcases, k):
             timesToTryAgain += 1
         testCaseStatus += 1
         print(testCaseStatus)
+        answerDist = totalHammingDistance(testcase.inputStrings, testcase.answer)
+        resultDist = totalHammingDistance(testcase.inputStrings, caseString)
+        print("Answer Dist:", answerDist)
+        print("Result Dist:", resultDist)
+        print("result:", caseString)
+        print("caseResult:", caseResult)
     closestStringAlgoEndTime = timeit.default_timer()
 
 
@@ -445,13 +473,14 @@ def compare_algorithms(testcases, k):
     print("Success count-", closestStringAlgoSuccessCount)
     print("Number of cases after retries", numCasesSaved + closestStringAlgoSuccessCount)
 
+
 def main():
     alphabet = ["a", "c", "g", "t"]
-    numStrings = 10
-    stringLength = 100
-    k = 10   # maximum Hamming distance
+    numStrings = 5
+    stringLength = 4
+    k = 1   # maximum Hamming distance
 
-    testcaseCount = 1000
+    testcaseCount = 1
 
     if len(sys.argv) > 1:
         if sys.argv[1] == "--generate":
@@ -474,7 +503,7 @@ def main():
             assert len(sys.argv) == 3, "Need filename to load generated testcases"
             filename = sys.argv[2]
             testcases = load_testcases_from_file(filename)
-            compare_algorithms(testcases[0:1000], k)
+            compare_algorithms(testcases[0:testcaseCount], k)
 
 
 if __name__ == "__main__":
