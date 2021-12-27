@@ -517,12 +517,10 @@ def totalHammingDistance(stringParts, answerString):
     #print("stringParts", stringParts)
     #print("answerString", answerString)
     for string in stringParts:
-        print("string, answerString:", string, answerString)
         for i in range(len(string)):
             if string[i] != answerString[i]:
-                print("i:", i)
                 totalDist += 1
-                print(string[i], answerString[i], totalDist)
+                #print(string[i], answerString[i], totalDist)
     #print("totalDist", totalDist)
     return totalDist
 
@@ -982,12 +980,12 @@ def main_comaprison_plot():
                     numCases += 1
                 closestStringAlgoEndTime = timeit.default_timer()
                 smallList = [ham, s, closestStringAlgoEndTime-closestStringAlgoStartTime]
-                print(smallList)
+                #print(smallList)
                 grandList.append(smallList)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % ( numStrings, ham, s, numCasesFailed, numCasesSaved))
                 print()
-            print(grandList)
+            #print(grandList)
             xAxis = [row[1] for row in grandList]
             yAxis = [row[2]/totalCases for row in grandList]
             label = "%d strings, Hamming distance %d " % (numStrings, ham)
