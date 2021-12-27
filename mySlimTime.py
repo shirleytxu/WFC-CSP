@@ -2,8 +2,8 @@ import random
 import pickle
 import sys
 import timeit
-import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 NOT_FOUND = "not found"
 
@@ -32,7 +32,10 @@ def createRandomTestCase(alphabet, numStrings, stringLength, maxDistance):
         positions_to_change = random.sample(range(stringLength), maxDistance)
         for position in positions_to_change:
             # replace the letter at position with a random letter
+            prevPos = inputString[position]
             inputString[position] = random.choice(alphabet)
+            while prevPos == inputString[position]:
+                inputString[position] = random.choice(alphabet)
 
         # add the changed inputString to results
         testCaseInputStrings.append(inputString)
@@ -67,8 +70,10 @@ def createSpecialTestCase1(alphabet, numStrings, stringLength, maxDistance, coun
         positions_to_change = random.sample(range(stringLength), maxDistance)
         for position in positions_to_change:
             # replace the letter at position with a random letter
+            prevPos = inputString[position]
             inputString[position] = random.choice(alphabet)
-
+            while prevPos == inputString[position]:
+                inputString[position] = random.choice(alphabet)
         # add the changed inputString to results
         if i == 0:
             # repeat the 1st string (numStrings - count) times
@@ -100,8 +105,10 @@ def createSpecialTestCase2(alphabet, numStrings, stringLength, maxDistance, coun
     # pick maxDistance position to changes from the 1st half of the string
     positions_to_change = random.sample(range(stringLength//2), maxDistance)
     for position in positions_to_change:
-        # replace the letter at position with a random letter
+        prevPos = inputString[position]
         inputString[position] = random.choice(alphabet)
+        while prevPos == inputString[position]:
+            inputString[position] = random.choice(alphabet)
 
     # add the changed inputString to results
     testCaseInputStrings.extend([inputString] * (numStrings - count))
@@ -365,8 +372,8 @@ def checkTestCase(numStrings, inputStrings, answer, alphabet, k):
 
     if inputStringDistances[0][1] > k:
         #print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
-        return False
-    return True
+        return False, result
+    return True, result
 
 def checkTestCaseOptimized(numStrings, inputStrings, answer, alphabet, k):
     #for inputStringIndex in range(numStrings):
@@ -393,8 +400,8 @@ def checkTestCaseOptimized(numStrings, inputStrings, answer, alphabet, k):
 
     if inputStringDistances[0][1] > k:
         #print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
-        return False
-    return True
+        return False, result
+    return True, result
 
 
 class ClosestStringTestCase(object):
@@ -505,16 +512,37 @@ def save_testcases_to_file(testcases, filename):
 def load_testcases_from_file(filename):
     return pickle.load(open(filename, "rb"))
 
+def totalHammingDistance(stringParts, answerString):
+    totalDist = 0
+    #print("stringParts", stringParts)
+    #print("answerString", answerString)
+    for string in stringParts:
+        print("string, answerString:", string, answerString)
+        for i in range(len(string)):
+            if string[i] != answerString[i]:
+                print("i:", i)
+                totalDist += 1
+                print(string[i], answerString[i], totalDist)
+    #print("totalDist", totalDist)
+    return totalDist
 
 def compare_algorithms(testcases):
+    CSAnswerDists = []
+    CSResultDists = []
+
+    FPAnswerDists = []
+    FPResultDists = []
+
     numCases = 0
     numCasesFailed = 0
     numCasesSaved = 0
 
+    caseSolution = []
+
     closestStringAlgoStartTime = timeit.default_timer()
     closestStringAlgoSuccessCount = 0
     for testcase in testcases:
-        caseResult = checkTestCaseOptimized(len(testcase.inputStrings),
+        caseResult, caseSolution = checkTestCaseOptimized(len(testcase.inputStrings),
                                             testcase.inputStrings,
                                             testcase.answer,
                                             testcase.alphabet,
@@ -531,7 +559,7 @@ def compare_algorithms(testcases):
             if (caseSaveTimeStop-caseSaveTimeStart) > 0.01:
                 break
             random.shuffle(testcase.inputStrings)
-            caseResult = checkTestCaseOptimized(len(testcase.inputStrings),
+            caseResult, caseSolution = checkTestCaseOptimized(len(testcase.inputStrings),
                                                 testcase.inputStrings,
                                                 testcase.answer,
                                                 testcase.alphabet,
@@ -541,6 +569,11 @@ def compare_algorithms(testcases):
                 numCasesSaved += 1
                 break
             timesToTryAgain += 1
+        answerDist = totalHammingDistance(testcase.inputStrings,
+                                              testcase.answer)
+        resultDist = totalHammingDistance(testcase.inputStrings, caseSolution)
+        CSAnswerDists.append(answerDist)
+        CSResultDists.append(resultDist)
     closestStringAlgoEndTime = timeit.default_timer()
 
     fixedParameterAlgoStartTime = timeit.default_timer()
@@ -555,20 +588,34 @@ def compare_algorithms(testcases):
                                        testcase.maxDistance)
         if fixedParameterAlgoResult != NOT_FOUND:
             fixedParameterAlgoSuccessCount += 1
+        answerDist = totalHammingDistance(testcase.inputStrings,
+                                          testcase.answer)
+        resultDist = totalHammingDistance(testcase.inputStrings,
+                                          fixedParameterAlgoResult)
+        FPAnswerDists.append(answerDist)
+        FPResultDists.append(resultDist)
         #print(fixedParameterAlgoSuccessCount)
     fixedParameterAlgoEndTime = timeit.default_timer()
+    print("CSAnswerDists:", CSAnswerDists)
+    print("CSResultDists:", CSResultDists)
     print("Closest String Algorithm Execute Time (%d tests)" % len(testcases),
           closestStringAlgoEndTime - closestStringAlgoStartTime)
     print("Out of", len(testcases), "test cases", numCasesFailed, "cases failed.")
     print("Saved cases: ", numCasesSaved)
     print("-----")
-
+    print("FPAnswerDists:", FPAnswerDists)
+    print("FPResultDists:", FPResultDists)
     print("Fixed Parameter Algorithm Execute Time (%d tests)" % len(testcases),
           fixedParameterAlgoEndTime - fixedParameterAlgoStartTime)
 
-
+    return CSAnswerDists, CSResultDists, FPAnswerDists, FPResultDists
 
 def compare_closest_algorithms(testcases):
+    CSAnswerDists = []
+    CSResultDists = []
+
+    FPAnswerDists = []
+    FPResultDists = []
     numCases = 0
     numCasesFailed = 0
     numCasesSaved = 0
@@ -576,7 +623,7 @@ def compare_closest_algorithms(testcases):
     closestStringAlgoStartTime = timeit.default_timer()
     closestStringAlgoSuccessCount = 0
     for testcase in testcases:
-        caseResult = checkTestCase(len(testcase.inputStrings),
+        caseResult, caseString = checkTestCase(len(testcase.inputStrings),
                                    testcase.inputStrings,
                                    testcase.answer,
                                    testcase.alphabet,
@@ -590,7 +637,7 @@ def compare_closest_algorithms(testcases):
         timesToTryAgain = 0
         while caseResult is False and timesToTryAgain <= 10:
             random.shuffle(testcase.inputStrings)
-            caseResult = checkTestCase(len(testcase.inputStrings),
+            caseResult, caseString = checkTestCase(len(testcase.inputStrings),
                                        testcase.inputStrings,
                                        testcase.answer,
                                        testcase.alphabet,
@@ -600,15 +647,22 @@ def compare_closest_algorithms(testcases):
                 numCasesSaved += 1
                 break
             timesToTryAgain += 1
+        answerDist = totalHammingDistance(testcase.inputStrings,
+                                          testcase.answer)
+        resultDist = totalHammingDistance(testcase.inputStrings, caseString)
+        CSAnswerDists.append(answerDist)
+        CSResultDists.append(resultDist)
     closestStringAlgoEndTime = timeit.default_timer()
 
+    CSAnswerDists2 = []
+    CSResultDists2 = []
     numCases2 = 0
     numCasesFailed2 = 0
     numCasesSaved2 = 0
     closestStringAlgoStartTime2 = timeit.default_timer()
     closestStringAlgoSuccessCount2 = 0
     for testcase in testcases:
-        caseResult = checkTestCaseOptimized(len(testcase.inputStrings),
+        caseResult, caseString = checkTestCaseOptimized(len(testcase.inputStrings),
                                    testcase.inputStrings,
                                    testcase.answer,
                                    testcase.alphabet,
@@ -622,7 +676,7 @@ def compare_closest_algorithms(testcases):
         timesToTryAgain = 0
         while caseResult is False and timesToTryAgain <= 10:
             random.shuffle(testcase.inputStrings)
-            caseResult = checkTestCaseOptimized(len(testcase.inputStrings),
+            caseResult, caseString = checkTestCaseOptimized(len(testcase.inputStrings),
                                                 testcase.inputStrings,
                                                 testcase.answer,
                                                 testcase.alphabet,
@@ -632,6 +686,10 @@ def compare_closest_algorithms(testcases):
                 numCasesSaved2 += 1
                 break
             timesToTryAgain += 1
+        answerDist2 = totalHammingDistance(testcase.inputStrings, testcase.answer)
+        resultDist2 = totalHammingDistance(testcase.inputStrings, caseString)
+        CSAnswerDists2.append(answerDist2)
+        CSResultDists2.append(resultDist2)
     closestStringAlgoEndTime2 = timeit.default_timer()
 
     print("Closest String Algorithm Execute Time (%d tests)" % len(testcases),
@@ -645,71 +703,300 @@ def compare_closest_algorithms(testcases):
     print("Out of", len(testcases), "test cases", numCasesFailed2, "cases failed.")
     print("Saved cases: ", numCasesSaved2)
 
+    return CSAnswerDists, CSResultDists, CSAnswerDists2, CSResultDists2
 
 
-def main_old():
+def generate_comparison_data(filename):
+    alphabet = ["a", "b", "c", "d", "e", "f", "g", "h"]
+    totalCases = 10000
+    numStringsList = [10, 20, 40, 80]
+    numStringsList = [10]
+    hammingDistList = [5, 10, 20, 40, 80]
+    hammingDistList = [10]
+    stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
+    stringLengthList = [20]
+
+    allResults = []
+    for numStrings in numStringsList:
+        for ham in hammingDistList:
+            for s in stringLengthList:
+                if ham >= s:
+                    continue
+
+                testCases = create_working_testcases(alphabet, numStrings, s, ham, totalCases)
+                numCases = 0
+                numCasesFailed = 0
+                numCasesSaved = 0
+
+                CSAnswerDists = []
+                CSResultDists = []
+                closestStringAlgoStartTime = timeit.default_timer()
+                while numCases < totalCases:
+                    testCase = testCases[numCases]
+                    caseResult, caseString = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+                    timesToTryAgain = 0
+                    while caseResult is False and timesToTryAgain < 199:
+                        if timesToTryAgain == 0:
+                            numCasesFailed += 1
+                        random.shuffle(testCase.inputStrings)
+                        caseResult, caseString = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+
+                        if caseResult == True:
+                            #print("Failed before, now works! Hurray! ")
+                            numCasesSaved += 1
+                            break
+                        timesToTryAgain += 1
+                    numCases += 1
+                    answerDist = totalHammingDistance(testCase.inputStrings,
+                                                      testCase.answer)
+                    resultDist = totalHammingDistance(testCase.inputStrings,
+                                                      caseString)
+                    CSAnswerDists.append(answerDist)
+                    CSResultDists.append(resultDist)
+                closestStringAlgoEndTime = timeit.default_timer()
+
+                CSAnswerDistSum = 0
+                CSResultDistSum = 0
+                for i in range (len(CSAnswerDists)):
+                    CSAnswerDistSum += CSAnswerDists[i]
+                    CSResultDistSum += CSResultDists[i]
+
+                result = dict()
+                result["Algorithm"] = "WFC-CSP"
+                result["Alphabet Size"] = len(alphabet)
+                result["k"] = numStrings
+                result["d"] = ham
+                result["L"] = s
+                result["Time"] = (closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
+                result["Total"] = totalCases
+                result["Failed"] = numCasesFailed
+                result["Saved"] = numCasesSaved
+                result["Average Answer Distance"] = CSAnswerDistSum / (totalCases * testCase.maxDistance * testCase.numStrings)
+                result["Average Result Distance"] = CSResultDistSum / (totalCases * testCase.maxDistance * testCase.numStrings)
+                print(result)
+                allResults.append(result)
+                print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
+                print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
+                """
+
+                if ham > 10:
+                    # skip CSD algorithm if hamming distance > 15
+                    continue
+                if ham == 10 and s > 80:
+                    continue
+
+                fixedParameterAlgoStartTime = timeit.default_timer()
+                fixedParameterAlgoSuccessCount = 0
+                numCases = 0
+                for testcase in testCases:
+                    numCases += 1
+                    # print("Csd: ", numCases)
+                    fixedParameterAlgoResult = CSd(testcase.inputStrings,
+                                                   testcase.maxDistance,
+                                                   testcase.inputStrings[0],
+                                                   testcase.maxDistance)
+                    if fixedParameterAlgoResult != NOT_FOUND:
+                        fixedParameterAlgoSuccessCount += 1
+                    # print(fixedParameterAlgoSuccessCount)
+                fixedParameterAlgoEndTime = timeit.default_timer()
+                result = dict()
+                result["Algorithm"] = "FP"
+                result["k"] = numStrings
+                result["d"] = ham
+                result["L"] = s
+                result["Time"] = (fixedParameterAlgoEndTime - fixedParameterAlgoStartTime) / totalCases
+                result["Total"] = totalCases
+                result["Failed"] = totalCases - fixedParameterAlgoSuccessCount
+                result["Saved"] = 0
+                print(result)
+                print()
+                allResults.append(result)
+                """
+
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved"])
+                df.to_excel(filename, index=False)
+
+
+def plot_figures(filename):
+    df = pd.read_excel(filename, index_col=None)
+    # convert time from seconds to millisecons
+    df["Time"] = df["Time"] * 1000.0
+
+    totalCases = 1000
+    numStringsList = [10, 20, 40, 80]
+    hammingDistList = [5, 10, 20, 40, 80]
+    stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
+
+    # different line style for different number of strings
+    plot_line_style = {
+        10: "-",
+        20: "--",
+        40: "-.",
+        80: ":"
+    }
+
+    # different plot marker for different hamming distance
+    plot_marker = {
+        5: "*",
+        10: "+",
+        20: "x",
+        40: "o",
+        80: "s",
+    }
+
+    plt.figure(figsize=(11.0, 8.5))
+    plt.xlabel("String Length")
+    plt.xticks(stringLengthList)
+    plt.ylabel("Processing Time (milliseconds)")
+    title = "Processing Time vs String Length (Alphabet Size 8)"
+    # plt.title(title)
+
+    for numStrings in numStringsList:
+        for ham in hammingDistList:
+            data = df[((df["Algorithm"] == "WFC-CSP") & (df["k"] == numStrings) & (df["d"] == ham))]
+            xAxis = data["L"].tolist()
+            yAxis = data["Time"].tolist()
+            label = "k=%d d=%d " % (numStrings, ham)
+            plt.plot(xAxis, yAxis, label=label, linestyle=plot_line_style[numStrings], marker=plot_marker[ham])
+
+    plt.grid(linestyle=":")
+    plt.legend()
+    plt.savefig("%s.png" % title, dpi=300)
+    """
+    plt.figure(figsize=(11.0, 8.5))
+    plt.xlabel("Hamming Distance")
+    plt.xticks(hammingDistList)
+    plt.ylabel("Processing Time (milliseconds)")
+    title = "Processing Time vs Hamming Distance"
+    # plt.title(title)
+    for numStrings in numStringsList:
+        for stringLength in stringLengthList:
+            data = df[((df["Algorithm"] == "WFC-CSP") & (df["k"] == numStrings) & (df["L"] == stringLength))]
+            xAxis = data["d"].tolist()
+            yAxis = data["Time"].tolist()
+            label = "k=%d L=%d " % (numStrings, stringLength)
+            plt.plot(xAxis, yAxis, label=label, linestyle=plot_line_style[numStrings], marker=plot_marker[ham])
+
+    plt.grid(linestyle=":")
+    plt.legend()
+    plt.savefig("%s.png" % title, dpi=300)
+    plt.show()
+
+    # compare WFC-CSP vs CSD
+    plt.figure(figsize=(11.0, 8.5))
+    plt.xlabel("String Length")
+    plt.xticks(stringLengthList)
+    plt.ylabel("Processing Time (milliseconds)")
+    title = "WFC-CSP vs CSD"
+    # plt.title(title)
+
+    for numStrings in numStringsList:
+        for ham in [5, 10]:
+            data = df[((df["Algorithm"] == "WFC-CSP") & (df["k"] == numStrings) & (df["d"] == ham) & (df["L"] < 100))]
+            xAxis = data["L"].tolist()
+            yAxis = data["Time"].tolist()
+            label = "k=%d d=%d WFC-CSP" % (numStrings, ham)
+            plt.plot(xAxis, yAxis, label=label, color="red", linestyle=plot_line_style[numStrings], marker=plot_marker[ham])
+
+    for numStrings in numStringsList:
+        for ham in [5, 10]:
+            data = df[((df["Algorithm"] == "FP") & (df["k"] == numStrings) & (df["d"] == ham) & (df["L"] < 100))]
+            xAxis = data["L"].tolist()
+            yAxis = data["Time"].tolist()
+            label = "k=%d d=%d FP" % (numStrings, ham)
+            plt.plot(xAxis, yAxis, label=label, color="blue", linestyle=plot_line_style[numStrings], marker=plot_marker[ham])
+
+    plt.grid(linestyle=":")
+    plt.legend()
+    plt.savefig("%s.png" % title, dpi=300)
+    plt.show()
+    """
+
+def main_comaprison_plot():
     alphabet = ["a", "c", "g", "t"]
     numStrings = 10
     totalCases = 1000
 
+    numStringsList = [10, 20, 40, 80]
 
     answers = []
     inputStrings = []
-    #dList = [10, 15, 20, 25, 30, 35, 40]
-    #stringLengthList = [50, 60, 70, 80]
-    hammingDistList = [10]
-    stringLengthList = [20, 40, 80, 160]
-    closestStringAlgoStartTime = timeit.default_timer()
-    grandList = []
-    for ham in hammingDistList:
-        for s in stringLengthList:
-            testCases = create_working_testcases(alphabet, numStrings, s, ham, totalCases)
-            #(alphabet, numStrings, stringLength, k, testcaseCount)
-            numCases = 0
-            numCasesFailed = 0
-            numCasesSaved = 0
-            closestStringAlgoStartTime = timeit.default_timer()
-            while numCases < totalCases:
-                testCase = testCases[numCases]
-                #(numStrings, inputStrings[numCases], answers[numCases],
-                                               #alphabet, k)
-                caseResult = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-                #print("done")
-                timesToTryAgain = 0
-                #while caseResult == False and timesToTryAgain <= math.factorial(stringLength):
-                while caseResult is False and timesToTryAgain <= 1:
-                    if timesToTryAgain == 0:
-                        numCasesFailed += 1
-                    random.shuffle(inputStrings)
-                    caseResult = caseResult = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+    hammingDistList = [10, 20, 40, 80]
+    stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
 
-                    if caseResult == True:
-                        #print("Failed before, now works! Hurray! ")
-                        numCasesSaved += 1
-                        break
-                    timesToTryAgain += 1
-                numCases += 1
-            closestStringAlgoEndTime = timeit.default_timer()
-            smallList = [ham, s, closestStringAlgoEndTime-closestStringAlgoStartTime]
-            print(smallList)
-            grandList = np.append(smallList)
-            print("Closest String Algorithm Execute Time (%d tests)" % totalCases,
-              closestStringAlgoEndTime - closestStringAlgoStartTime)
-            print("Out of", numCases, "test cases", numCasesFailed, "cases failed.")
-            print("Saved cases: ", numCasesSaved)
-    print(grandList)
-    xAxis = []
-    xAxis = [row[1] for row in grandList]
-        xAxis.append(xPlaceholder)
-    yAxis = grandList[:, 2]
-    plot(xAxis, yAxis)
+    # different line style for different number of strings
+    plot_line_style = {
+        10: "-",
+        20: "--",
+        40: "-.",
+        80: ":"
+    }
 
-def plot(xAxis, yAxis):
-    plt.plot(xAxis, yAxis)
-    plt.xLabel("d")
-    plt.yLabel("time")
-    plt.title("d vs time")
+    # different plot marker for different hamming distance
+    plot_marker = {
+        10: "+",
+        20: "x",
+        40: "o",
+        80: "s",
+    }
+
+    plt.figure(figsize=(11.0, 8.5))
+    plt.xlabel("String Length")
+    plt.xticks(stringLengthList)
+    plt.ylabel("Processing Time (seconds)")
+    title="Processing Time vs String Length (K=%d, Alphabet Size=%d)" % (numStrings, len(alphabet))
+    plt.title(title)
+
+    for numStrings in numStringsList:
+        for ham in hammingDistList:
+            grandList = []
+            for s in stringLengthList:
+                if ham >= s:
+                    continue
+
+                testCases = create_working_testcases(alphabet, numStrings, s, ham, totalCases)
+                #(alphabet, numStrings, stringLength, k, testcaseCount)
+                numCases = 0
+                numCasesFailed = 0
+                numCasesSaved = 0
+                closestStringAlgoStartTime = timeit.default_timer()
+                while numCases < totalCases:
+                    testCase = testCases[numCases]
+                    #(numStrings, inputStrings[numCases], answers[numCases],
+                                                   #alphabet, k)
+                    caseResult = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+                    #print("done")
+                    timesToTryAgain = 0
+                    #while caseResult == False and timesToTryAgain <= math.factorial(stringLength):
+                    while caseResult is False and timesToTryAgain <= 1:
+                        if timesToTryAgain == 0:
+                            numCasesFailed += 1
+                        random.shuffle(inputStrings)
+                        caseResult = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+
+                        if caseResult == True:
+                            #print("Failed before, now works! Hurray! ")
+                            numCasesSaved += 1
+                            break
+                        timesToTryAgain += 1
+                    numCases += 1
+                closestStringAlgoEndTime = timeit.default_timer()
+                smallList = [ham, s, closestStringAlgoEndTime-closestStringAlgoStartTime]
+                print(smallList)
+                grandList.append(smallList)
+                print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
+                print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % ( numStrings, ham, s, numCasesFailed, numCasesSaved))
+                print()
+            print(grandList)
+            xAxis = [row[1] for row in grandList]
+            yAxis = [row[2]/totalCases for row in grandList]
+            label = "%d strings, Hamming distance %d " % (numStrings, ham)
+            plt.plot(xAxis, yAxis, label=label, linestyle=plot_line_style[numStrings], marker=plot_marker[ham])
+
+    plt.legend()
+    plt.savefig("%s.png" % title, dpi=300)
     plt.show()
+
 
 def main():
     alphabet = ["a", "c", "g", "t"]
@@ -718,7 +1005,6 @@ def main():
     k = 8   # maximum Hamming distance
 
     testcaseCount = 100
-
     if len(sys.argv) > 1:
         if sys.argv[1] == "--generate":
             assert len(sys.argv) == 3, "Need filename to save generated testcases"
@@ -737,15 +1023,25 @@ def main():
             assert len(sys.argv) == 3, "Need filename to load generated testcases"
             filename = sys.argv[2]
             testcases = load_testcases_from_file(filename)
-            compare_algorithms(testcases)
+            CSAnswerDists, CSResultDists, FPAnswerDists, FPResultDists = compare_algorithms(testcases)
         elif sys.argv[1] == "--compare-closest-string":
             assert len(
                 sys.argv) == 3, "Need filename to load generated testcases"
             filename = sys.argv[2]
             testcases = load_testcases_from_file(filename)
             compare_closest_algorithms(testcases)
+        elif sys.argv[1] == "--generate-comparison-data":
+            assert len(
+                sys.argv) == 3, "Need filename (.xlsx) to load generated testcases"
+            filename = sys.argv[2]
+            generate_comparison_data(filename)
+        elif sys.argv[1] == "--plot":
+            assert len(
+                sys.argv) == 3, "Need filename (.xlsx) to load generated testcases"
+            filename = sys.argv[2]
+            plot_figures(filename)
     else:
-        main_old()
+        main_comaprison_plot()
 
 
 if __name__ == "__main__":
