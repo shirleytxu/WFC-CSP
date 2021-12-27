@@ -525,11 +525,11 @@ def totalHammingDistance(stringParts, answerString):
     return totalDist
 
 def compare_algorithms(testcases):
-    CSAnswerDists = []
-    CSResultDists = []
+    closestStringAnswerDists = []
+    closestStringSolutionDists = []
 
-    FPAnswerDists = []
-    FPResultDists = []
+    fixedParameterAnswerDists = []
+    fixedParameterSolutionDists = []
 
     numCases = 0
     numCasesFailed = 0
@@ -569,9 +569,9 @@ def compare_algorithms(testcases):
             timesToTryAgain += 1
         answerDist = totalHammingDistance(testcase.inputStrings,
                                               testcase.answer)
-        resultDist = totalHammingDistance(testcase.inputStrings, testCaseSolution)
-        CSAnswerDists.append(answerDist)
-        CSResultDists.append(resultDist)
+        solutionDist = totalHammingDistance(testcase.inputStrings, testCaseSolution)
+        closestStringAnswerDists.append(answerDist)
+        closestStringSolutionDists.append(solutionDist)
     closestStringAlgoEndTime = timeit.default_timer()
 
     fixedParameterAlgoStartTime = timeit.default_timer()
@@ -580,40 +580,38 @@ def compare_algorithms(testcases):
     for testcase in testcases:
         numCases += 1
         #print("Csd: ", numCases)
-        fixedParameterAlgoResult = CSd(testcase.inputStrings,
+        fixedParameterAlgoSolution = CSd(testcase.inputStrings,
                                        testcase.maxDistance,
                                        testcase.inputStrings[0],
                                        testcase.maxDistance)
-        if fixedParameterAlgoResult != NOT_FOUND:
+        if fixedParameterAlgoSolution != NOT_FOUND:
             fixedParameterAlgoSuccessCount += 1
         answerDist = totalHammingDistance(testcase.inputStrings,
                                           testcase.answer)
-        resultDist = totalHammingDistance(testcase.inputStrings,
-                                          fixedParameterAlgoResult)
-        FPAnswerDists.append(answerDist)
-        FPResultDists.append(resultDist)
+        solutionDist = totalHammingDistance(testcase.inputStrings,
+                                          fixedParameterAlgoSolution)
+        fixedParameterAnswerDists.append(answerDist)
+        fixedParameterSolutionDists.append(solutionDist)
         #print(fixedParameterAlgoSuccessCount)
     fixedParameterAlgoEndTime = timeit.default_timer()
-    print("CSAnswerDists:", CSAnswerDists)
-    print("CSResultDists:", CSResultDists)
+    print("closestStringAnswerDists:", closestStringAnswerDists)
+    print("closestStringSolutionDists:", closestStringSolutionDists)
     print("Closest String Algorithm Execute Time (%d tests)" % len(testcases),
           closestStringAlgoEndTime - closestStringAlgoStartTime)
     print("Out of", len(testcases), "test cases", numCasesFailed, "cases failed.")
     print("Saved cases: ", numCasesSaved)
     print("-----")
-    print("FPAnswerDists:", FPAnswerDists)
-    print("FPResultDists:", FPResultDists)
+    print("fixedParameterAnswerDists:", fixedParameterAnswerDists)
+    print("fixedParameterSolutionDists:", fixedParameterSolutionDists)
     print("Fixed Parameter Algorithm Execute Time (%d tests)" % len(testcases),
           fixedParameterAlgoEndTime - fixedParameterAlgoStartTime)
 
 
 
 def compare_closest_algorithms(testcases):
-    CSAnswerDists = []
-    CSResultDists = []
+    closestStringAnswerDists = []
+    closestStringSolutionDists = []
 
-    FPAnswerDists = []
-    FPResultDists = []
     numCases = 0
     numCasesFailed = 0
     numCasesSaved = 0
@@ -647,13 +645,13 @@ def compare_closest_algorithms(testcases):
             timesToTryAgain += 1
         answerDist = totalHammingDistance(testcase.inputStrings,
                                           testcase.answer)
-        resultDist = totalHammingDistance(testcase.inputStrings, testCaseSolution)
-        CSAnswerDists.append(answerDist)
-        CSResultDists.append(resultDist)
+        solutionDist = totalHammingDistance(testcase.inputStrings, testCaseSolution)
+        closestStringAnswerDists.append(answerDist)
+        closestStringSolutionDists.append(solutionDist)
     closestStringAlgoEndTime = timeit.default_timer()
 
-    CSAnswerDists2 = []
-    CSResultDists2 = []
+    closestStringAnswerDists2 = []
+    closestStringSolutionDists2 = []
     numCases2 = 0
     numCasesFailed2 = 0
     numCasesSaved2 = 0
@@ -685,9 +683,9 @@ def compare_closest_algorithms(testcases):
                 break
             timesToTryAgain += 1
         answerDist2 = totalHammingDistance(testcase.inputStrings, testcase.answer)
-        resultDist2 = totalHammingDistance(testcase.inputStrings, testCaseSolution)
-        CSAnswerDists2.append(answerDist2)
-        CSResultDists2.append(resultDist2)
+        solutionDist2 = totalHammingDistance(testcase.inputStrings, testCaseSolution)
+        closestStringAnswerDists2.append(answerDist2)
+        closestStringSolutionDists2.append(solutionDist2)
     closestStringAlgoEndTime2 = timeit.default_timer()
 
     print("Closest String Algorithm Execute Time (%d tests)" % len(testcases),
@@ -724,10 +722,10 @@ def generate_comparison_data(filename):
                 numCasesFailed = 0
                 numCasesSaved = 0
 
-                closestStringResultDists = []
+                closestStringSolutionDists = []
                 closestStringAnswerDists = []
-                fixedParameterResultDists = []
                 fixedParameterAnswerDists = []
+                fixedParameterSolutionDists = []
                 closestStringAlgoStartTime = timeit.default_timer()
                 while numCases < totalCases:
                     testCase = testCases[numCases]
@@ -747,20 +745,20 @@ def generate_comparison_data(filename):
                     numCases += 1
                     answerDist = totalHammingDistance(testCase.inputStrings,
                                                       testCase.answer)
-                    resultDist = totalHammingDistance(testCase.inputStrings,
+                    solutionDist = totalHammingDistance(testCase.inputStrings,
                                                       testCaseSolution)
-                    closestStringResultDists.append(answerDist)
-                    closestStringAnswerDists.append(resultDist)
+                    closestStringAnswerDists.append(answerDist)
+                    closestStringSolutionDists.append(solutionDist)
                 closestStringAlgoEndTime = timeit.default_timer()
 
                 closestStringAnswerDistSum = 0
-                closestStringResultDistSum = 0
-                for i in range (len(closestStringResultDists)):
-                    closestStringAnswerDistSum += closestStringResultDists[i]
-                    closestStringResultDistSum += closestStringAnswerDists[i]
+                closestStringSolutionDistSum = 0
+                for i in range (len(closestStringSolutionDists)):
+                    closestStringAnswerDistSum += closestStringAnswerDists[i]
+                    closestStringSolutionDistSum += closestStringSolutionDists[i]
 
                 closestStringAverageAnswerDistance = closestStringAnswerDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
-                closestStringAverageResultDistance = closestStringResultDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
+                closestStringAverageSolutionDistance = closestStringSolutionDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
                 result = dict()
                 result["Algorithm"] = "WFC-CSP"
                 result["Alphabet Size"] = len(alphabet)
@@ -772,7 +770,7 @@ def generate_comparison_data(filename):
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
                 result["Average Answer Distance"] = closestStringAverageAnswerDistance
-                result["Average Result Distance"] = closestStringAverageResultDistance
+                result["Average Result Distance"] = closestStringAverageSolutionDistance
                 print(result)
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
@@ -791,29 +789,29 @@ def generate_comparison_data(filename):
                 for testcase in testCases:
                     numCases += 1
                     # print("Csd: ", numCases)
-                    fixedParameterAlgoResult = CSd(testcase.inputStrings,
+                    fixedParameterAlgoSolution = CSd(testcase.inputStrings,
                                                    testcase.maxDistance,
                                                    testcase.inputStrings[0],
                                                    testcase.maxDistance)
-                    if fixedParameterAlgoResult != NOT_FOUND:
+                    if fixedParameterAlgoSolution != NOT_FOUND:
                         fixedParameterAlgoSuccessCount += 1
                     # print(fixedParameterAlgoSuccessCount)
                     answerDist = totalHammingDistance(testCase.inputStrings,
                                                       testCase.answer)
-                    resultDist = totalHammingDistance(testCase.inputStrings,
-                                                      fixedParameterAlgoResult)
-                    fixedParameterResultDists.append(answerDist)
-                    fixedParameterAnswerDists.append(resultDist)
+                    solutionDist = totalHammingDistance(testCase.inputStrings,
+                                                      fixedParameterAlgoSolution)
+                    fixedParameterAnswerDists.append(answerDist)
+                    fixedParameterSolutionDists.append(solutionDist)
                 fixedParameterAlgoEndTime = timeit.default_timer()
 
                 fixedParameterAnswerDistSum = 0
-                fixedParameterResultDistSum = 0
-                for i in range(len(fixedParameterResultDists)):
-                    fixedParameterAnswerDistSum += fixedParameterAnswerDists[i]
-                    fixedParameterResultDistSum += fixedParameterResultDists[i]
+                fixedParameterSolutionDistSum = 0
+                for i in range(len(fixedParameterAnswerDists)):
+                    fixedParameterAnswerDistSum += fixedParameterSolutionDists[i]
+                    fixedParameterSolutionDistSum += fixedParameterAnswerDists[i]
 
                 fixedParameterAverageAnswerDistance = fixedParameterAnswerDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
-                fixedParameterAverageResultDistance = fixedParameterResultDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
+                fixedParameterAverageSolutionDistance = fixedParameterSolutionDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
                 result = dict()
                 result["Algorithm"] = "FP"
                 result["k"] = numStrings
@@ -824,7 +822,7 @@ def generate_comparison_data(filename):
                 result["Failed"] = totalCases - fixedParameterAlgoSuccessCount
                 result["Saved"] = 0
                 result["Average Answer Distance"] = fixedParameterAverageAnswerDistance
-                result["Average Result Distance"] = fixedParameterAverageResultDistance
+                result["Average Result Distance"] = fixedParameterAverageSolutionDistance
 
                 print(result)
                 print()
