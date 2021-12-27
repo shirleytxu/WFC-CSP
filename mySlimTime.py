@@ -770,12 +770,12 @@ def generate_comparison_data(filename):
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
                 result["Average Answer Distance"] = closestStringAverageAnswerDistance
-                result["Average Result Distance"] = closestStringAverageSolutionDistance
+                result["Average Solution Distance"] = closestStringAverageSolutionDistance
                 print(result)
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
-
+                print("Average Answer Distance=%d and Average Solution Distance=%d" % (closestStringAverageAnswerDistance, closestStringAverageSolutionDistance))
 
                 if ham > 10:
                     # skip CSD algorithm if hamming distance > 15
@@ -807,8 +807,8 @@ def generate_comparison_data(filename):
                 fixedParameterAnswerDistSum = 0
                 fixedParameterSolutionDistSum = 0
                 for i in range(len(fixedParameterAnswerDists)):
-                    fixedParameterAnswerDistSum += fixedParameterSolutionDists[i]
-                    fixedParameterSolutionDistSum += fixedParameterAnswerDists[i]
+                    fixedParameterSolutionDistSum += fixedParameterSolutionDists[i]
+                    fixedParameterAnswerDistSum += fixedParameterAnswerDists[i]
 
                 fixedParameterAverageAnswerDistance = fixedParameterAnswerDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
                 fixedParameterAverageSolutionDistance = fixedParameterSolutionDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
@@ -822,7 +822,7 @@ def generate_comparison_data(filename):
                 result["Failed"] = totalCases - fixedParameterAlgoSuccessCount
                 result["Saved"] = 0
                 result["Average Answer Distance"] = fixedParameterAverageAnswerDistance
-                result["Average Result Distance"] = fixedParameterAverageSolutionDistance
+                result["Average Solution Distance"] = fixedParameterAverageSolutionDistance
 
                 print(result)
                 print()
