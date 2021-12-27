@@ -775,7 +775,7 @@ def generate_comparison_data(filename):
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
-                print("Average Answer Distance=%d and Average Solution Distance=%d" % (closestStringAverageAnswerDistance, closestStringAverageSolutionDistance))
+                print("Average Answer Distance=%f and Average Solution Distance=%f" % (closestStringAverageAnswerDistance, closestStringAverageSolutionDistance))
 
                 if ham > 10:
                     # skip CSD algorithm if hamming distance > 15
@@ -828,7 +828,7 @@ def generate_comparison_data(filename):
                 print()
                 allResults.append(result)
 
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Answer Distance", "Average Result Distance"])
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Answer Distance", "Average Solution Distance"])
                 df.to_excel(filename, index=False)
 
 
