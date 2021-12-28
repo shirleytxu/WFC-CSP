@@ -341,7 +341,7 @@ def findClosestStringOptimized(alphabet, inputStrings, maximumDistance):
         # find the 1st (position, letter) in scoreboard  that matches
         # maxDistanceInputString
 
-        maxLetter = findMaxLetters(maxDistanceInputString, scoreboard)
+        maxLetter = findMaxLetters(maxDistanceInputString, scoreboard, letterPositionTable, inputStringDistances)
         #print("maxLetter", maxLetter)# found, update the answer
         #print("found position %d, letter '%s'" % (position, letter))
         #maxLetter has [position, letter, score]
@@ -716,7 +716,7 @@ def compare_closest_algorithms(testcases):
 
 def generate_comparison_data(filename):
     alphabet = ["a", "b", "c", "d", "e", "f", "g", "h"]
-    totalCases = 10000
+    totalCases = 10
     numStringsList = [10, 20, 40, 80]
     numStringsList = [10]
     hammingDistList = [5, 10, 20, 40, 80]
@@ -765,14 +765,16 @@ def generate_comparison_data(filename):
                     closestStringSolutionDists.append(solutionDist)
                 closestStringAlgoEndTime = timeit.default_timer()
 
-                closestStringAnswerDistSum = 0
-                closestStringSolutionDistSum = 0
+                closestStringMaxAnswerDist = 0
+                closestStringMaxSolutionDist = 0
                 for i in range (len(closestStringSolutionDists)):
-                    closestStringAnswerDistSum += closestStringAnswerDists[i]
-                    closestStringSolutionDistSum += closestStringSolutionDists[i]
+                    if int(closestStringAnswerDists[i]) > closestStringMaxAnswerDist:
+                        closestStringMaxAnswerDist = int(closestStringAnswerDists[i])
+                    if int(closestStringSolutionDists[i]) > closestStringMaxSolutionDist:
+                        closestStringMaxSolutionDist = int(closestStringSolutionDists[i])
 
-                closestStringAverageAnswerDistance = closestStringAnswerDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
-                closestStringAverageSolutionDistance = closestStringSolutionDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
+                closestStringMaxAnswerDist /= testCase.maxDistance
+                closestStringMaxSolutionDist /= testCase.maxDistance
                 result = dict()
                 result["Algorithm"] = "WFC-CSP"
                 result["Alphabet Size"] = len(alphabet)
@@ -783,13 +785,13 @@ def generate_comparison_data(filename):
                 result["Total"] = totalCases
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
-                result["Average Answer Distance"] = closestStringAverageAnswerDistance
-                result["Average Solution Distance"] = closestStringAverageSolutionDistance
+                result["Max Answer Distance"] = closestStringMaxAnswerDist
+                result["Max Solution Distance"] = closestStringMaxSolutionDist
                 print(result)
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
-                print("Average Answer Distance=%f and Average Solution Distance=%f" % (closestStringAverageAnswerDistance, closestStringAverageSolutionDistance))
+                print("Average Answer Distance=%f and Average Solution Distance=%f" % (closestStringMaxAnswerDist, closestStringMaxSolutionDist))
 
                 if ham > 10:
                     # skip CSD algorithm if hamming distance > 15
@@ -818,14 +820,17 @@ def generate_comparison_data(filename):
                     fixedParameterSolutionDists.append(solutionDist)
                 fixedParameterAlgoEndTime = timeit.default_timer()
 
-                fixedParameterAnswerDistSum = 0
-                fixedParameterSolutionDistSum = 0
-                for i in range(len(fixedParameterAnswerDists)):
-                    fixedParameterSolutionDistSum += fixedParameterSolutionDists[i]
-                    fixedParameterAnswerDistSum += fixedParameterAnswerDists[i]
 
-                fixedParameterAverageAnswerDistance = fixedParameterAnswerDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
-                fixedParameterAverageSolutionDistance = fixedParameterSolutionDistSum / float(totalCases * testCase.maxDistance * testCase.numStrings)
+                fixedParameterMaxAnswerDist = 0
+                fixedParameterMaxSolutionDist = 0
+                for i in range(len(fixedParameterSolutionDists)):
+                    if int(fixedParameterAnswerDists[i]) > fixedParameterMaxAnswerDist:
+                        fixedParameterMaxAnswerDist = int(fixedParameterAnswerDists[i])
+                    if int(fixedParameterSolutionDists[i]) > fixedParameterMaxSolutionDist:
+                        fixedParameterMaxSolutionDist = int(fixedParameterSolutionDists[i])
+
+                fixedParameterMaxAnswerDist /= testCase.maxDistance
+                fixedParameterMaxSolutionDist /= testCase.maxDistance
                 result = dict()
                 result["Algorithm"] = "FP"
                 result["k"] = numStrings
@@ -835,14 +840,14 @@ def generate_comparison_data(filename):
                 result["Total"] = totalCases
                 result["Failed"] = totalCases - fixedParameterAlgoSuccessCount
                 result["Saved"] = 0
-                result["Average Answer Distance"] = fixedParameterAverageAnswerDistance
-                result["Average Solution Distance"] = fixedParameterAverageSolutionDistance
+                result["Max Answer Distance"] = fixedParameterMaxAnswerDist
+                result["Max Solution Distance"] = fixedParameterMaxSolutionDist
 
                 print(result)
                 print()
                 allResults.append(result)
 
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Answer Distance", "Average Solution Distance"])
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Max Answer Distance", "Max Solution Distance"])
                 df.to_excel(filename, index=False)
 
 
@@ -851,7 +856,7 @@ def plot_figures(filename):
     # convert time from seconds to millisecons
     df["Time"] = df["Time"] * 1000.0
 
-    totalCases = 1000
+    totalCases = 10
     numStringsList = [10, 20, 40, 80]
     hammingDistList = [5, 10, 20, 40, 80]
     stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
