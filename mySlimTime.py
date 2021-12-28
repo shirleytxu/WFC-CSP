@@ -767,14 +767,15 @@ def generate_comparison_data(filename):
 
                 closestStringMaxAnswerDist = 0
                 closestStringMaxSolutionDist = 0
-                for i in range (len(closestStringSolutionDists)):
+                for i in range(len(closestStringSolutionDists)):
                     if int(closestStringAnswerDists[i]) > closestStringMaxAnswerDist:
                         closestStringMaxAnswerDist = int(closestStringAnswerDists[i])
                     if int(closestStringSolutionDists[i]) > closestStringMaxSolutionDist:
                         closestStringMaxSolutionDist = int(closestStringSolutionDists[i])
 
-                closestStringMaxAnswerDist /= testCase.maxDistance
-                closestStringMaxSolutionDist /= testCase.maxDistance
+                closestStringMaxAnswerDist /= float(ham * numStrings)
+                closestStringMaxSolutionDist /= float(ham * numStrings)
+                print("hamming distance parameter:", ham)
                 result = dict()
                 result["Algorithm"] = "WFC-CSP"
                 result["Alphabet Size"] = len(alphabet)
@@ -791,7 +792,7 @@ def generate_comparison_data(filename):
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
-                print("Average Answer Distance=%f and Average Solution Distance=%f" % (closestStringMaxAnswerDist, closestStringMaxSolutionDist))
+                print("Max Answer Distance=%f and Max Solution Distance=%f" % (closestStringMaxAnswerDist, closestStringMaxSolutionDist))
 
                 if ham > 10:
                     # skip CSD algorithm if hamming distance > 15
@@ -829,8 +830,8 @@ def generate_comparison_data(filename):
                     if int(fixedParameterSolutionDists[i]) > fixedParameterMaxSolutionDist:
                         fixedParameterMaxSolutionDist = int(fixedParameterSolutionDists[i])
 
-                fixedParameterMaxAnswerDist /= testCase.maxDistance
-                fixedParameterMaxSolutionDist /= testCase.maxDistance
+                fixedParameterMaxAnswerDist /= float(ham * numStrings)
+                fixedParameterMaxSolutionDist /= float(ham * numStrings)
                 result = dict()
                 result["Algorithm"] = "FP"
                 result["k"] = numStrings
