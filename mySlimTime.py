@@ -140,19 +140,21 @@ def calculateLetterFreq(inputStrings, alphabet):
 
     # letter frequency table is a 2-D array implemented as list of list
     letterFreqTable = {}
+    letterPositionTable = {}
     for position in range(stringLength):
         # create frequency for all alphabet letter at this position
         alphabetFreqTable = {}
-
+        alphabetIndexTable = {}
         for alphabetLetter in alphabet:
             alphabetFreqTable[alphabetLetter] = 0
-            for inputString in inputStrings:
-                if inputString[position] == alphabetLetter:
+            alphabetIndexTable[alphabetLetter] = []
+            for index in range(len(inputStrings)):
+                if inputStrings[index][position] == alphabetLetter:
                     alphabetFreqTable[alphabetLetter] += 1
-
+                    alphabetIndexTable[alphabetLetter].append(index)
         letterFreqTable[position] = alphabetFreqTable
-
-    return letterFreqTable
+        letterPositionTable[position] = alphabetIndexTable
+    return letterFreqTable, letterPositionTable
 
 
 def calculateScoreboard(letterFreqTable, positions):
@@ -226,7 +228,7 @@ def updateInputStringsDistances2(inputStringDistances, answer, inputStrings, upd
         inputStringDistances[firstInputStringIndexDistanceUnchanged] = temp
 
 def getMaxDistStr(strDistArray):
-    maxDist=strDistArray[0][1]
+    maxDist = strDistArray[0][1]
     count = 0
     #print("strDistArray", strDistArray)
     for string, distance in strDistArray:
@@ -235,7 +237,7 @@ def getMaxDistStr(strDistArray):
     pick = random.randrange(count)
     return strDistArray[pick]
 
-def findMaxLetters(maxDistanceInputString, scoreboard):
+def findMaxLetters(maxDistanceInputString, scoreboard, letterPositionTable, inputStringDistances):
     maxLetters = []
     for position, letter, score in scoreboard:
         if maxDistanceInputString[position] == letter:
@@ -250,13 +252,25 @@ def findMaxLetters(maxDistanceInputString, scoreboard):
     for letter in maxLetters:
         if letter[2] == maxDist:
             maxDistLetters.append(letter)
-    return random.choice(maxDistLetters)
+
+    maxStringDistance = 0
+    for position, letter, score in maxDistLetters:
+        totalStringDistance = 0
+        stringIndexList = letterPositionTable[position][letter]
+        for stringIndex in stringIndexList:
+            for stringDistance in inputStringDistances:
+                if stringDistance[0] == stringIndex:
+                    totalStringDistance += stringDistance[1]
+        if totalStringDistance > maxStringDistance:
+            maxStringDistance = totalStringDistance
+            maxLetter = position, letter, score
+    return maxLetter
 
 def findClosestString(alphabet, inputStrings, maximumDistance):
     # all string are of same length
     stringLength = len(inputStrings[0])
 
-    letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
+    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
 
     # create initial answer with all SPACE
     answer = [" "] * stringLength
@@ -284,7 +298,7 @@ def findClosestString(alphabet, inputStrings, maximumDistance):
         # find the 1st (position, letter) in scoreboard  that matches
         # maxDistanceInputString
 
-        maxLetter = findMaxLetters(maxDistanceInputString, scoreboard)
+        maxLetter = findMaxLetters(maxDistanceInputString, scoreboard, letterPositionTable, inputStringDistances)
         #print("maxLetter", maxLetter)# found, update the answer
         #print("found position %d, letter '%s'" % (position, letter))
         #maxLetter has [position, letter, score]
@@ -301,7 +315,7 @@ def findClosestStringOptimized(alphabet, inputStrings, maximumDistance):
     # all string are of same length
     stringLength = len(inputStrings[0])
 
-    letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
+    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
 
     # create initial answer with all SPACE
     answer = [" "] * stringLength
@@ -353,7 +367,7 @@ def checkTestCase(numStrings, inputStrings, answer, alphabet, k):
     #inputStringIndex, inputStrings[inputStringIndex],
     #calculateDistance(answer, inputStrings[inputStringIndex])))
 
-    letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
+    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
     #print("letter frequency table:")
     #printLetterFreqTable(letterFreqTable)
 
@@ -381,7 +395,7 @@ def checkTestCaseOptimized(numStrings, inputStrings, answer, alphabet, k):
             #inputStringIndex, inputStrings[inputStringIndex],
             #calculateDistance(answer, inputStrings[inputStringIndex])))
 
-    letterFreqTable = calculateLetterFreq(inputStrings, alphabet)
+    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
     #print("letter frequency table:")
     #printLetterFreqTable(letterFreqTable)
 
