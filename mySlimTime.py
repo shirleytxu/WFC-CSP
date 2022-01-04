@@ -651,10 +651,10 @@ def load_testcases_from_file(filename):
 
 def getMaxHammingDistance(stringParts, answerString):
     # can change to min or max by setting maxDist to 0 or big number, modifying if statement
-    maxDist = 0
+    maxDist = 100000
     for string in stringParts:
         dist = calculateDistance(string, answerString)
-        if dist > maxDist:
+        if dist < maxDist:
             maxDist = dist
     return maxDist
 
@@ -921,19 +921,17 @@ def generate_comparison_data(filename):
     totalCases = 1000
     numStringsList = [10, 20, 40, 80]
     # numStringsList = [10]
-    hammingDistList = [5, 10, 20, 40, 60]
-    # hammingDistList = [8]
-    stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
-    # stringLengthList = [20]
+    # hammingDistList = [5, 10, 20, 40, 60]
+    hammingDistList = [40, 60]
+    #stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
+    stringLengthList = [120, 140, 160, 180, 200]
 
     allResults = []
-    print("starting to read in: ")
     for numStrings in numStringsList:
         for ham in hammingDistList:
             for s in stringLengthList:
                 if ham > s/3:
                     continue
-
                 print("numStrings = %d, hamming distance=%d, string length=%d" % (numStrings, ham, s))
                 testCases = create_working_testcases(alphabet, numStrings, s, ham, totalCases)
                 testCase_filename = "testcase_%d_%d_%d" % (numStrings, ham, s)
@@ -949,7 +947,6 @@ def generate_comparison_data(filename):
                 numCasesFailed = 0
                 numCasesSaved = 0
 
-                print("Starting execution: ")
                 closestStringSolutionDists = []
                 closestStringAnswerDists = []
                 closestStringAlgoStartTime = timeit.default_timer()
@@ -989,8 +986,6 @@ def generate_comparison_data(filename):
                 closestStringAverageSolutionDistance = closestStringSolutionDistSum / float(totalCases * ham)
 
                 closestStringTotalDistance = 0
-                print("Original")
-                print("this is numCases:", numCases)
                 for i in range(numCases):
                     for index in range(len(inputStringDistances)):
                         inputStringIndex = inputStringDistances[index][1]
@@ -1012,7 +1007,6 @@ def generate_comparison_data(filename):
                 result["Overall Solution Distance"] = closestStringTotalDistance
                 result["Overall Reference Distance"] = totalCases * ham * numStrings
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
-                print("printing results here:", result)
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
@@ -1060,8 +1054,6 @@ def generate_comparison_data(filename):
 
                 closestStringTotalDistance = 0
 
-                print("Optimized")
-                print("this is numCases:", numCases)
                 for i in range(numCases):
                     for index in range(len(inputStringDistances)):
                         inputStringIndex = inputStringDistances[index][1]
@@ -1132,8 +1124,6 @@ def generate_comparison_data(filename):
 
                 closestStringTotalDistance = 0
 
-                print("Optimized with Original Retry")
-                print("this is numCases:", numCases)
                 for i in range(numCases):
                     for index in range(len(inputStringDistances)):
                         inputStringIndex = inputStringDistances[index][1]
@@ -1209,7 +1199,7 @@ def generate_comparison_data(filename):
                 for testCaseDistances in allTestCaseDistances:
                     for stringDistance in testCaseDistances:
                         fixedParameterTotalDistance += stringDistance[1]
-                print("fixedParameterTotalDistance:", fixedParameterTotalDistance)
+
                 result = dict()
                 result["Algorithm"] = "FP"
                 result["k"] = numStrings
@@ -1223,7 +1213,7 @@ def generate_comparison_data(filename):
                 result["Average Max Solution Distance"] = fixedParameterAverageSolutionDistance
                 result["Overall Solution Distance"] = fixedParameterTotalDistance
                 result["Overall Reference Distance"] = totalCases * ham * numStrings
-                result["Success Rate"] =  fixedParameterAlgoSuccessCount / totalCases
+                result["Success Rate"] = fixedParameterAlgoSuccessCount / totalCases
 
                 print(result)
                 print()
