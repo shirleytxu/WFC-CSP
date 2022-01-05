@@ -968,8 +968,7 @@ def generate_comparison_data(filename):
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
                 result["Average Max Solution Distance"] = closestStringAverageSolutionDistance
-                result["Overall Solution Distance"] = closestStringTotalDistance
-                result["Overall Reference Distance"] = totalCases * ham * numStrings
+                result["Overall Solution Distance"] = closestStringTotalDistance / float(totalCases * ham * numStrings)
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
@@ -1029,8 +1028,7 @@ def generate_comparison_data(filename):
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
                 result["Average Max Solution Distance"] = closestStringAverageSolutionDistance
-                result["Overall Solution Distance"] = closestStringTotalDistance
-                result["Overall Reference Distance"] = totalCases * ham * numStrings
+                result["Overall Solution Distance"] = closestStringTotalDistance / float(totalCases * ham * numStrings)
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
                 print(result)
                 allResults.append(result)
@@ -1092,8 +1090,7 @@ def generate_comparison_data(filename):
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
                 result["Average Max Solution Distance"] = closestStringAverageSolutionDistance
-                result["Overall Solution Distance"] = closestStringTotalDistance
-                result["Overall Reference Distance"] = totalCases * ham * numStrings
+                result["Overall Solution Distance"] = closestStringTotalDistance / float(totalCases * ham * numStrings)
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
                 print(result)
                 allResults.append(result)
@@ -1155,15 +1152,14 @@ def generate_comparison_data(filename):
                 result["Failed"] = totalCases - fixedParameterAlgoSuccessCount
                 result["Saved"] = 0
                 result["Average Max Solution Distance"] = fixedParameterAverageSolutionDistance
-                result["Overall Solution Distance"] = fixedParameterTotalDistance
-                result["Overall Reference Distance"] = totalCases * ham * numStrings
+                result["Overall Solution Distance"] = fixedParameterTotalDistance / float(totalCases * ham * numStrings)
                 result["Success Rate"] = fixedParameterAlgoSuccessCount / totalCases
 
                 print(result)
                 print()
                 allResults.append(result)
 
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Overall Solution Distance", "Overall Reference Distance", "Success Rate"])
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Overall Solution Distance", "Success Rate"])
                 df.to_excel(filename, index=False)
 
 
