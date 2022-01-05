@@ -650,7 +650,6 @@ def load_testcases_from_file(filename):
 
 
 def getHammingDistanceMaxAndAvg(stringParts, answerString):
-    # can change to min or max by setting maxDist to 0 or big number, modifying if statement
     maxDist = 0
     totalDist = 0
     for string in stringParts:
@@ -660,7 +659,6 @@ def getHammingDistanceMaxAndAvg(stringParts, answerString):
         totalDist += dist
     averageDist = totalDist / len(stringParts)
     return maxDist, averageDist
-
 
 
 def compare_algorithms(testcases):
@@ -899,13 +897,14 @@ def generate_comparison_data(filename):
                 "p", "q", "r", "s", "t"
                 ]
     """
-    totalCases = 1
-    numStringsList = [10, 20, 40, 80]
+    totalCases = 1000
+    numStringsList = [10, 20, 40, 80, 160]
     # numStringsList = [10]
-    hammingDistList = [5, 10, 20, 40, 60]
-    # hammingDistList = [40, 60]
-    stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
-    # stringLengthList = [120, 140, 160, 180, 200]
+    hammingDistList = [5, 10, 20, 40, 60, 80]
+    # hammingDistList = [60]
+    stringLengthList = [20, 40, 60, 80, 120, 160, 180, 320]
+    # stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
+    # stringLengthList = [180]
 
     allResults = []
     for numStrings in numStringsList:
@@ -929,9 +928,8 @@ def generate_comparison_data(filename):
                 numCasesSaved = 0
 
                 closestStringMaxSolutionDists = []
+                closestStringAvgSolutionDists = []
                 closestStringAlgoStartTime = timeit.default_timer()
-                inputStringDistances = []
-                closestStringAvgDistSum = []
                 while numCases < totalCases:
                     testCase = testCases[numCases]
                     testCaseResult, testCaseSolution = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
@@ -950,20 +948,11 @@ def generate_comparison_data(filename):
                     numCases += 1
                     maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testCase.inputStrings,
                                                                   testCaseSolution)
-                    #change starts here
-                    closestStringAvgDistSum.append(avgDist)
                     closestStringMaxSolutionDists.append(maxSolutionDist)
+                    closestStringAvgSolutionDists.append(avgDist)
                 closestStringAlgoEndTime = timeit.default_timer()
-
-                closestStringTotalDistance = 0
-                closestStringAverageSolutionDistance = sum(closestStringMaxSolutionDists) / float(totalCases * ham)
-                for index in range(len(inputStringDistances)):
-                    closestStringTotalDistance += inputStringDistances[index][1]
-
-                closestStringFinalAvgDistSum = 0
-                for avgDistSum in closestStringAvgDistSum:
-                    closestStringFinalAvgDistSum += avgDistSum
-                closestStringFinalAvgDistSum /= float(totalCases * ham)
+                closestStringAverageMaxSolutionDistance = sum(closestStringMaxSolutionDists) / float(totalCases * ham)
+                closestStringAverageAvgSolutionDistance = sum(closestStringAvgSolutionDists) / float(totalCases * ham)
 
                 result = dict()
                 result["Algorithm"] = "WFC-CSP"
@@ -975,20 +964,24 @@ def generate_comparison_data(filename):
                 result["Total"] = totalCases
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
-                result["Average Max Solution Distance"] = closestStringAverageSolutionDistance
-                result["Overall Average Solution Distance"] = closestStringFinalAvgDistSum
+                result["Average Max Solution Distance"] = closestStringAverageMaxSolutionDistance
+                result["Average Avg Solution Distance"] = closestStringAverageAvgSolutionDistance
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
+                print("Average Max Answer Distance=%f and Average Avg Solution Distance=%f" % (closestStringAverageMaxSolutionDistance, closestStringAverageAvgSolutionDistance))
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
+                df.to_excel(filename, index=False)
 
+                """
                 # WFC-CSP optimized
                 numCases = 0
                 numCasesFailed = 0
                 numCasesSaved = 0
 
                 closestStringMaxSolutionDists = []
-                closestStringAvgDistSum = []
+                closestStringAvgSolutionDists = []
                 closestStringAlgoStartTime = timeit.default_timer()
                 while numCases < totalCases:
                     testCase = testCases[numCases]
@@ -1008,49 +1001,41 @@ def generate_comparison_data(filename):
                     numCases += 1
                     maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testCase.inputStrings,
                                                                   testCaseSolution)
-                    closestStringAvgDistSum.append(avgDist)
                     closestStringMaxSolutionDists.append(maxSolutionDist)
+                    closestStringAvgSolutionDists.append(avgDist)
                 closestStringAlgoEndTime = timeit.default_timer()
 
-                closestStringTotalDistance = 0
-                closestStringAverageSolutionDistance = sum(
-                    closestStringMaxSolutionDists) / float(totalCases * ham)
-                for index in range(len(inputStringDistances)):
-                    closestStringTotalDistance += inputStringDistances[index][1]
-
-                closestStringFinalAvgDistSum = 0
-                for avgDistSum in closestStringAvgDistSum:
-                    closestStringFinalAvgDistSum += avgDistSum
-                closestStringFinalAvgDistSum /= float(totalCases * ham)
+                closestStringAverageMaxSolutionDistance = sum(closestStringMaxSolutionDists) / float(totalCases * ham)
+                closestStringAverageAvgSolutionDistance = sum(closestStringAvgSolutionDists) / float(totalCases * ham)
 
                 result = dict()
-                result["Algorithm"] = "WFC-CSP"
+                result["Algorithm"] = "WFC-CSP-Optimized"
                 result["Alphabet Size"] = len(alphabet)
                 result["k"] = numStrings
                 result["d"] = ham
                 result["L"] = s
-                result["Time"] = (
-                                             closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
+                result["Time"] = (closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
                 result["Total"] = totalCases
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
-                result[
-                    "Average Max Solution Distance"] = closestStringAverageSolutionDistance
-                result[
-                    "Overall Average Solution Distance"] = closestStringFinalAvgDistSum
+                result["Average Max Solution Distance"] = closestStringAverageMaxSolutionDistance
+                result["Average Avg Solution Distance"] = closestStringAverageAvgSolutionDistance
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
                 print(result)
                 allResults.append(result)
                 print("Closest String Algorithm Optimized Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
+                print("Average Max Answer Distance=%f and Average Avg Solution Distance=%f" % (closestStringAverageMaxSolutionDistance, closestStringAverageAvgSolutionDistance))
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
+                df.to_excel(filename, index=False)
 
                 # WFC-CSP optimized with original retry
                 numCases = 0
                 numCasesFailed = 0
                 numCasesSaved = 0
 
-                closestStringAvgDistSum = []
                 closestStringMaxSolutionDists = []
+                closestStringAvgSolutionDists = []
                 closestStringAlgoStartTime = timeit.default_timer()
                 while numCases < totalCases:
                     testCase = testCases[numCases]
@@ -1070,41 +1055,34 @@ def generate_comparison_data(filename):
                     numCases += 1
                     maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testCase.inputStrings,
                                                                   testCaseSolution)
-                    closestStringAvgDistSum.append(avgDist)
                     closestStringMaxSolutionDists.append(maxSolutionDist)
+                    closestStringAvgSolutionDists.append(avgDist)
                 closestStringAlgoEndTime = timeit.default_timer()
 
-                closestStringTotalDistance = 0
-                closestStringAverageSolutionDistance = sum(
-                    closestStringMaxSolutionDists) / float(totalCases * ham)
-                for index in range(len(inputStringDistances)):
-                    closestStringTotalDistance += inputStringDistances[index][1]
-
-                closestStringFinalAvgDistSum = 0
-                for avgDistSum in closestStringAvgDistSum:
-                    closestStringFinalAvgDistSum += avgDistSum
-                closestStringFinalAvgDistSum /= float(totalCases * ham)
+                closestStringAverageMaxSolutionDistance = sum(closestStringMaxSolutionDists) / float(totalCases * ham)
+                closestStringAverageAvgSolutionDistance = sum(closestStringAvgSolutionDists) / float(totalCases * ham)
 
                 result = dict()
-                result["Algorithm"] = "WFC-CSP"
+                result["Algorithm"] = "WFC-CSP-Optimized-Original-Retry"
                 result["Alphabet Size"] = len(alphabet)
                 result["k"] = numStrings
                 result["d"] = ham
                 result["L"] = s
-                result["Time"] = (
-                                             closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
+                result["Time"] = (closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
                 result["Total"] = totalCases
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
-                result[
-                    "Average Max Solution Distance"] = closestStringAverageSolutionDistance
-                result[
-                    "Overall Average Solution Distance"] = closestStringFinalAvgDistSum
+                result["Average Max Solution Distance"] = closestStringAverageMaxSolutionDistance
+                result["Average Avg Solution Distance"] = closestStringAverageAvgSolutionDistance
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
                 print(result)
                 allResults.append(result)
                 print("Closest String Algorithm Optimized Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
+                print("Average Max Solution Distance=%f and Average Avg Solution Distance=%f" % (closestStringAverageMaxSolutionDistance, closestStringAverageAvgSolutionDistance))
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
+                df.to_excel(filename, index=False)
+                """
 
                 # Fixed Position (CSD) algorithm
                 if ham > 10:
@@ -1115,10 +1093,9 @@ def generate_comparison_data(filename):
 
                 fixedParameterAlgoStartTime = timeit.default_timer()
                 fixedParameterMaxSolutionDists = []
-                allTestCaseDistances = []
+                fixedParameterAvgSolutionDists = []
                 fixedParameterAlgoSuccessCount = 0
                 numCases = 0
-                fixedParameterAvgDistSum = []
                 for testcase in testCases:
                     numCases += 1
                     # print("Csd: ", numCases)
@@ -1131,26 +1108,15 @@ def generate_comparison_data(filename):
                     # print(fixedParameterAlgoSuccessCount)
                     maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testcase.inputStrings,
                                                                   fixedParameterAlgoSolution)
-                    fixedParameterAvgDistSum.append(avgDist)
                     fixedParameterMaxSolutionDists.append(maxSolutionDist)
-                    distances = calculateDistancesWithInputStrings(
-                        fixedParameterAlgoSolution, testcase.inputStrings)
-                    allTestCaseDistances.append(distances)
+                    fixedParameterAvgSolutionDists.append(avgDist)
                 fixedParameterAlgoEndTime = timeit.default_timer()
-
-                fixedParameterTotalDistance = 0
-                fixedParameterAverageSolutionDistance = sum(
-                    fixedParameterMaxSolutionDists) / float(totalCases * ham)
-                for index in range(len(inputStringDistances)):
-                    fixedParameterTotalDistance += inputStringDistances[index][1]
-
-                fixedParameterFinalAvgDistSum = 0
-                for avgDistSum in fixedParameterAvgDistSum:
-                    fixedParameterFinalAvgDistSum += avgDistSum
-                fixedParameterFinalAvgDistSum /= float(totalCases * ham)
+                fixedParameterAverageMaxSolutionDistance = sum(fixedParameterMaxSolutionDists) / float(totalCases * ham)
+                fixedParameterAverageAvgSolutionDistance = sum(fixedParameterAvgSolutionDists) / float(totalCases * ham)
 
                 result = dict()
                 result["Algorithm"] = "FP"
+                result["Alphabet Size"] = len(alphabet)
                 result["k"] = numStrings
                 result["d"] = ham
                 result["L"] = s
@@ -1158,15 +1124,15 @@ def generate_comparison_data(filename):
                 result["Total"] = totalCases
                 result["Failed"] = totalCases - fixedParameterAlgoSuccessCount
                 result["Saved"] = 0
-                result["Average Max Solution Distance"] = fixedParameterAverageSolutionDistance
-                result["Overall Average Solution Distance"] = fixedParameterFinalAvgDistSum
+                result["Average Max Solution Distance"] = fixedParameterAverageMaxSolutionDistance
+                result["Average Avg Solution Distance"] = fixedParameterAverageAvgSolutionDistance
                 result["Success Rate"] = fixedParameterAlgoSuccessCount / totalCases
 
                 print(result)
                 print()
                 allResults.append(result)
 
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Overall Average Solution Distance", "Success Rate"])
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
                 df.to_excel(filename, index=False)
 
 
