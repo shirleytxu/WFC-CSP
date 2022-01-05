@@ -899,7 +899,7 @@ def generate_comparison_data(filename):
                 "p", "q", "r", "s", "t"
                 ]
     """
-    totalCases = 1000
+    totalCases = 1
     numStringsList = [10, 20, 40, 80]
     # numStringsList = [10]
     hammingDistList = [5, 10, 20, 40, 60]
@@ -1008,6 +1008,7 @@ def generate_comparison_data(filename):
                     numCases += 1
                     maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testCase.inputStrings,
                                                                   testCaseSolution)
+                    closestStringAvgDistSum.append(avgDist)
                     closestStringMaxSolutionDists.append(maxSolutionDist)
                 closestStringAlgoEndTime = timeit.default_timer()
 
@@ -1017,11 +1018,10 @@ def generate_comparison_data(filename):
                 for index in range(len(inputStringDistances)):
                     closestStringTotalDistance += inputStringDistances[index][1]
 
-                for i in range(numCases):
-                    for index in range(len(inputStringDistances)):
-                        inputStringIndex = inputStringDistances[index][1]
-                        #print("inputStringIndex:", i, inputStringIndex)
-                        closestStringTotalDistance += inputStringIndex
+                closestStringFinalAvgDistSum = 0
+                for avgDistSum in closestStringAvgDistSum:
+                    closestStringFinalAvgDistSum += avgDistSum
+                closestStringFinalAvgDistSum /= float(totalCases * ham)
 
                 result = dict()
                 result["Algorithm"] = "WFC-CSP"
@@ -1029,12 +1029,15 @@ def generate_comparison_data(filename):
                 result["k"] = numStrings
                 result["d"] = ham
                 result["L"] = s
-                result["Time"] = (closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
+                result["Time"] = (
+                                             closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
                 result["Total"] = totalCases
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
-                result["Average Max Solution Distance"] = closestStringAverageSolutionDistance
-                result["Overall Solution Distance"] = closestStringTotalDistance / float(totalCases * ham * numStrings)
+                result[
+                    "Average Max Solution Distance"] = closestStringAverageSolutionDistance
+                result[
+                    "Overall Average Solution Distance"] = closestStringFinalAvgDistSum
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
                 print(result)
                 allResults.append(result)
