@@ -7,6 +7,47 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 NOT_FOUND = "not found"
+ALPHABET_4 = ["a", "b", "c", "d"]
+ALPHABET_20 = ["a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t"]
+TEST_CONFIGURATION = {
+    # alphabet
+    #'alphabet': ALPHABET_20,
+    'alphabet': ALPHABET_4,
+
+    # number of strings
+    'K': [10, 20, 40],
+
+    # hamming distance
+    'd': [5, 10, 20, 40, 60, 80],
+
+    # string length
+    'L': [10, 15, 20, 30, 40, 60, 80, 120, 160, 180, 240, 320],
+
+    # number of test cases in each configuration
+    'totalCases': 1000,
+
+    # maxTries
+    'maxTries': 1000
+}
+
+
+def skipTest(alphabet, K, d, L):
+    if len(alphabet) == 20 and K > 20:
+        return True
+
+    if d/L > 1/2:
+        return True
+
+    if d == 5 and L > 120:
+        return True
+
+    if d == 10 and L > 120:
+        return True
+
+    if d == 20 and L > 180:
+        return True
+
+    return False
 
 
 def createRandomTestCase(alphabet, numStrings, stringLength, maxDistance):
@@ -43,91 +84,6 @@ def createRandomTestCase(alphabet, numStrings, stringLength, maxDistance):
 
     return testCaseAnswer, testCaseInputStrings
 
-
-def createSpecialTestCase1(alphabet, numStrings, stringLength, maxDistance, count):
-    """
-    :param alphabet:  list of letters that can be used in string
-    :param numStrings:  the number of test case input strings to create
-    :param stringLength: the length test case input string
-    :param maxDistance: the maximum Hamming distance allowed between input
-                        string and test case answer
-    :return: (test case answer, list of test case input strings)
-    """
-
-    assert numStrings > count, "Special test case requires numbStrings > count"
-
-    # create test case answer
-    testCaseAnswer = random.choices(alphabet, k=stringLength)
-
-    # create test case input strings
-    testCaseInputStrings = []
-
-    # create test case input strings
-    for i in range(count + 1):
-        # start with the answer
-        inputString = testCaseAnswer.copy()
-
-        # pick maxDistance position to changes
-        positions_to_change = random.sample(range(stringLength), maxDistance)
-        for position in positions_to_change:
-            # replace the letter at position with a random letter
-            prevPos = inputString[position]
-            inputString[position] = random.choice(alphabet)
-            while prevPos == inputString[position]:
-                inputString[position] = random.choice(alphabet)
-        # add the changed inputString to results
-        if i == 0:
-            # repeat the 1st string (numStrings - count) times
-            testCaseInputStrings.extend([inputString] * (numStrings-count))
-        else:
-            testCaseInputStrings.append(inputString)
-
-    return testCaseAnswer, testCaseInputStrings
-
-
-def createSpecialTestCase2(alphabet, numStrings, stringLength, maxDistance, count):
-    """
-    :param alphabet:  list of letters that can be used in string
-    :param numStrings:  the number of test case input strings to create
-    :param stringLength: the length test case input string
-    :param maxDistance: the maximum Hamming distance allowed between input
-                        string and test case answer
-    :return: (test case answer, list of test case input strings)
-    """
-    # create test case answer
-    testCaseAnswer = random.choices(alphabet, k=stringLength)
-
-    # create test case input strings
-    testCaseInputStrings = []
-
-    # create test case input strings
-    inputString = testCaseAnswer.copy()
-
-    # pick maxDistance position to changes from the 1st half of the string
-    positions_to_change = random.sample(range(stringLength//2), maxDistance)
-    for position in positions_to_change:
-        prevPos = inputString[position]
-        inputString[position] = random.choice(alphabet)
-        while prevPos == inputString[position]:
-            inputString[position] = random.choice(alphabet)
-
-    # add the changed inputString to results
-    testCaseInputStrings.extend([inputString] * (numStrings - count))
-
-    for i in range(count):
-        # start with the answer
-        inputString = testCaseAnswer.copy()
-
-        # pick maxDistance position to changes from the 1st half of the string
-        positions_to_change = random.sample(range(stringLength//2, stringLength), maxDistance)
-        for position in positions_to_change:
-            # replace the letter at position with a random letter
-            inputString[position] = random.choice(alphabet)
-
-        # add the changed inputString to results
-        testCaseInputStrings.append(inputString)
-
-    return testCaseAnswer, testCaseInputStrings
 
 
 def calculateLetterFreq(inputStrings, alphabet):
@@ -196,6 +152,7 @@ def calculateDistancesWithInputStrings(answer, inputStrings):
     distances.sort(key=lambda entry: entry[1], reverse=True)
     return distances
 
+
 def updateInputStringsDistances(inputStringDistances, answer, inputStrings, updatedPosition):
     for index in range(len(inputStringDistances)):
         inputStringIndex = inputStringDistances[index][0]
@@ -207,43 +164,21 @@ def updateInputStringsDistances(inputStringDistances, answer, inputStrings, upda
     inputStringDistances.sort(key=lambda entry: entry[1], reverse=True)
 
 
-def updateInputStringsDistances2(inputStringDistances, answer, inputStrings, updatedPosition):
-    firstInputStringIndexDistanceUnchanged = None
-    for index in range(len(inputStringDistances)):
-        inputStringIndex = inputStringDistances[index][0]
-        if inputStrings[inputStringIndex][updatedPosition] == answer[updatedPosition]:
-            # the updated position at answer has the same letter as the input string,
-            # reduce Hamming distance of the input string by 1
-            inputStringDistances[index][1] -= 1
-        else:
-            if firstInputStringIndexDistanceUnchanged is None:
-                # this is the first string for which the distance is changed:
-                firstInputStringIndexDistanceUnchanged = index
-
-    # check if we need to swap the every first entry with the first string updated
-    if firstInputStringIndexDistanceUnchanged is not None and \
-            inputStringDistances[0][1] < inputStringDistances[firstInputStringIndexDistanceUnchanged][1]:
-        # swap this two entry
-        temp = inputStringDistances[0]
-        inputStringDistances[0] = inputStringDistances[firstInputStringIndexDistanceUnchanged]
-        inputStringDistances[firstInputStringIndexDistanceUnchanged] = temp
-
 def getMaxDistStr(strDistArray):
     maxDist = strDistArray[0][1]
     count = 0
-    #print("strDistArray", strDistArray)
     for string, distance in strDistArray:
         if distance == maxDist:
             count += 1
     pick = random.randrange(count)
     return strDistArray[pick]
 
+
 def findMaxLetters(maxDistanceInputString, scoreboard):
     maxLetters = []
     for position, letter, score in scoreboard:
         if maxDistanceInputString[position] == letter:
             maxLetters.append([position, letter, score])
-    #print(maxLetters)
     try:
         maxDist = maxLetters[0][2]
     except IndexError as e:
@@ -255,34 +190,6 @@ def findMaxLetters(maxDistanceInputString, scoreboard):
             maxDistLetters.append(letter)
     return random.choice(maxDistLetters)
 
-def findMaxLettersOptimized(maxDistanceInputString, scoreboard, letterPositionTable, inputStringDistances):
-    maxLetters = []
-    for position, letter, score in scoreboard:
-        if maxDistanceInputString[position] == letter:
-            maxLetters.append([position, letter, score])
-    #print(maxLetters)
-    try:
-        maxDist = maxLetters[0][2]
-    except IndexError as e:
-        print(scoreboard)
-        print(maxLetters)
-    maxDistLetters = []
-    for letter in maxLetters:
-        if letter[2] == maxDist:
-            maxDistLetters.append(letter)
-
-    maxStringDistance = 0
-    for position, letter, score in maxDistLetters:
-        totalStringDistance = 0
-        stringIndexList = letterPositionTable[position][letter]
-        for stringIndex in stringIndexList:
-            for stringDistance in inputStringDistances:
-                if stringDistance[0] == stringIndex:
-                    totalStringDistance += stringDistance[1]
-        if totalStringDistance > maxStringDistance:
-            maxStringDistance = totalStringDistance
-            maxLetter = position, letter, score
-    return maxLetter
 
 def findClosestString(alphabet, inputStrings, maximumDistance):
     # all string are of same length
@@ -294,62 +201,13 @@ def findClosestString(alphabet, inputStrings, maximumDistance):
     answer = [" "] * stringLength
     undecidedPositions = set(range(stringLength))
 
-    while len(undecidedPositions) > 0:
-        # there is at least 1 undecided positions
-        #print()
-        #print("current undecided position:", len(undecidedPositions), undecidedPositions)
-
-        scoreboard = calculateScoreboard(letterFreqTable, undecidedPositions)
-        #print("current scoreboard:", scoreboard)
-
-        # sort and find string with maximum distance to current answer
-        inputStringDistances = calculateDistancesWithInputStrings(answer, inputStrings)
-
-        # first string is the one with maximum distance to the answer
-        maxDistanceInputStringIndex, maxDistance = getMaxDistStr(inputStringDistances)
-        if maxDistance - len(undecidedPositions) > maximumDistance:
-            answer = NOT_FOUND
-            break
-        maxDistanceInputString = inputStrings[maxDistanceInputStringIndex]
-        #print("current string with maximum Distance: ", maxDistanceInputString, maxDistance)
-
-        # find the 1st (position, letter) in scoreboard  that matches
-        # maxDistanceInputString
-
-        maxLetter = findMaxLetters(maxDistanceInputString, scoreboard)
-        #print("maxLetter", maxLetter)# found, update the answer
-        #print("found position %d, letter '%s'" % (position, letter))
-        #maxLetter has [position, letter, score]
-        answer[maxLetter[0]] = maxLetter[1]
-        #print("answer = ", answer)
-
-        # remove position from undecided positions
-        undecidedPositions.remove(maxLetter[0])
-
-    return answer
-
-
-def findClosestStringOptimized(alphabet, inputStrings, maximumDistance):
-    # all string are of same length
-    stringLength = len(inputStrings[0])
-
-    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
-
-    # create initial answer with all SPACE
-    answer = [" "] * stringLength
-    undecidedPositions = set(range(stringLength))
-
     # sort and find string with maximum distance to current answer
     inputStringDistances = calculateDistancesWithInputStrings(answer,
                                                               inputStrings)
 
     while True:
         # there is at least 1 undecided positions
-        #print()
-        #print("current undecided position:", len(undecidedPositions), undecidedPositions)
-
         scoreboard = calculateScoreboard(letterFreqTable, undecidedPositions)
-        #print("current scoreboard:", scoreboard)
 
         # first string is the one with maximum distance to the answer
         maxDistanceInputStringIndex, maxDistance = getMaxDistStr(inputStringDistances)
@@ -360,61 +218,7 @@ def findClosestStringOptimized(alphabet, inputStrings, maximumDistance):
         # maxDistanceInputString
 
         maxLetter = findMaxLetters(maxDistanceInputString, scoreboard)
-        #print("maxLetter", maxLetter)# found, update the answer
-        #print("found position %d, letter '%s'" % (position, letter))
-        #maxLetter has [position, letter, score]
         answer[maxLetter[0]] = maxLetter[1]
-        #print("answer = ", answer)
-
-        # remove position from undecided positions
-        undecidedPositions.remove(maxLetter[0])
-
-        # update
-        if len(undecidedPositions) > 0:
-            updateInputStringsDistances(inputStringDistances, answer, inputStrings, maxLetter[0])
-        else:
-            # all position decided
-            break
-
-    return answer
-
-
-def findClosestStringOptimized2(alphabet, inputStrings, maximumDistance):
-    # all string are of same length
-    stringLength = len(inputStrings[0])
-
-    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
-
-    # create initial answer with all SPACE
-    answer = [" "] * stringLength
-    undecidedPositions = set(range(stringLength))
-
-    # sort and find string with maximum distance to current answer
-    inputStringDistances = calculateDistancesWithInputStrings(answer,
-                                                              inputStrings)
-
-    while True:
-        # there is at least 1 undecided positions
-        #print()
-        #print("current undecided position:", len(undecidedPositions), undecidedPositions)
-
-        scoreboard = calculateScoreboard(letterFreqTable, undecidedPositions)
-        #print("current scoreboard:", scoreboard)
-
-        # first string is the one with maximum distance to the answer
-        maxDistanceInputStringIndex, maxDistance = getMaxDistStr(inputStringDistances)
-        maxDistanceInputString = inputStrings[maxDistanceInputStringIndex]
-        #print("current string with maximum Distance: ", maxDistanceInputString, maxDistance)
-
-        # find the 1st (position, letter) in scoreboard  that matches
-        # maxDistanceInputString
-
-        maxLetter = findMaxLettersOptimized(maxDistanceInputString, scoreboard, letterPositionTable, inputStringDistances)
-        #print("maxLetter", maxLetter)# found, update the answer
-        #print("found position %d, letter '%s'" % (position, letter))
-        #maxLetter has [position, letter, score]
-        answer[maxLetter[0]] = maxLetter[1]
-        #print("answer = ", answer)
 
         # remove position from undecided positions
         undecidedPositions.remove(maxLetter[0])
@@ -430,87 +234,14 @@ def findClosestStringOptimized2(alphabet, inputStrings, maximumDistance):
 
 
 def checkTestCase(numStrings, inputStrings, answer, alphabet, k):
-    #for inputStringIndex in range(numStrings):
-    #print("input_strings %2d: %s, distance to expected answer: %d" % (
-    #inputStringIndex, inputStrings[inputStringIndex],
-    #calculateDistance(answer, inputStrings[inputStringIndex])))
 
     letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
-    #print("letter frequency table:")
-    #printLetterFreqTable(letterFreqTable)
 
     result = findClosestString(alphabet, inputStrings, k)
-    #print("expected answer      : ", answer)
-    #print("Found closest strings: ", result)
-    #print("Distance between expected answer and result: ", calculateDistance(answer, result))
-
-    #for inputStringIndex in range(numStrings):
-    #print("input_strings %2d: %s, distance to result: %d" % (
-    #inputStringIndex, inputStrings[inputStringIndex],
-    #calculateDistance(result, inputStrings[inputStringIndex])))
 
     inputStringDistances = calculateDistancesWithInputStrings(result, inputStrings)
-    #print("maxDistance to result, stringIndex %d, distance: %d" % inputStringDistances[0])
 
     if inputStringDistances[0][1] > k:
-        #print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
-        return False, result
-    return True, result
-
-def checkTestCaseOptimized(numStrings, inputStrings, answer, alphabet, k):
-    #for inputStringIndex in range(numStrings):
-        #print("input_strings %2d: %s, distance to expected answer: %d" % (
-            #inputStringIndex, inputStrings[inputStringIndex],
-            #calculateDistance(answer, inputStrings[inputStringIndex])))
-
-    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
-    #print("letter frequency table:")
-    #printLetterFreqTable(letterFreqTable)
-
-    result = findClosestStringOptimized(alphabet, inputStrings, k)
-    #print("expected answer      : ", answer)
-    #print("Found closest strings: ", result)
-    #print("Distance between expected answer and result: ", calculateDistance(answer, result))
-
-    #for inputStringIndex in range(numStrings):
-        #print("input_strings %2d: %s, distance to result: %d" % (
-            #inputStringIndex, inputStrings[inputStringIndex],
-            #calculateDistance(result, inputStrings[inputStringIndex])))
-
-    inputStringDistances = calculateDistancesWithInputStrings(result, inputStrings)
-    #print("maxDistance to result, stringIndex %d, distance: %d" % inputStringDistances[0])
-
-    if inputStringDistances[0][1] > k:
-        #print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
-        return False, result
-    return True, result
-
-
-def checkTestCaseOptimized2(numStrings, inputStrings, answer, alphabet, k):
-    #for inputStringIndex in range(numStrings):
-        #print("input_strings %2d: %s, distance to expected answer: %d" % (
-            #inputStringIndex, inputStrings[inputStringIndex],
-            #calculateDistance(answer, inputStrings[inputStringIndex])))
-
-    letterFreqTable, letterPositionTable = calculateLetterFreq(inputStrings, alphabet)
-    #print("letter frequency table:")
-    #printLetterFreqTable(letterFreqTable)
-
-    result = findClosestStringOptimized2(alphabet, inputStrings, k)
-    #print("expected answer      : ", answer)
-    #print("Found closest strings: ", result)
-    #print("Distance between expected answer and result: ", calculateDistance(answer, result))
-
-    #for inputStringIndex in range(numStrings):
-        #print("input_strings %2d: %s, distance to result: %d" % (
-            #inputStringIndex, inputStrings[inputStringIndex],
-            #calculateDistance(result, inputStrings[inputStringIndex])))
-
-    inputStringDistances = calculateDistancesWithInputStrings(result, inputStrings)
-    #print("maxDistance to result, stringIndex %d, distance: %d" % inputStringDistances[0])
-
-    if inputStringDistances[0][1] > k:
-        #print("Algorithm Failed! Result has larger Hamming distance %d > %d" % (inputStringDistances[0][1], k))
         return False, result
     return True, result
 
@@ -629,7 +360,6 @@ def CSd(S, d, s, deltaD):
 def create_working_testcases(alphabet, numStrings, stringLength, k, count):
     testcases = []
     while len(testcases) < count:
-        #print("create_working_testcases: ", len(testcases))
         testcase = ClosestStringTestCase(alphabet, numStrings, stringLength, k)
         testcases.append(testcase)
 
@@ -677,12 +407,11 @@ def compare_algorithms(testcases):
     closestStringAlgoStartTime = timeit.default_timer()
     closestStringAlgoSuccessCount = 0
     for testcase in testcases:
-        testCaseResult, testCaseSolution = checkTestCaseOptimized(len(testcase.inputStrings),
+        testCaseResult, testCaseSolution = checkTestCase(len(testcase.inputStrings),
                                             testcase.inputStrings,
                                             testcase.answer,
                                             testcase.alphabet,
                                             testcase.maxDistance)
-        # print("done")
         numCases += 1
         if testCaseResult is False:
             numCasesFailed += 1
@@ -694,13 +423,12 @@ def compare_algorithms(testcases):
             if (caseSaveTimeStop-caseSaveTimeStart) > 0.01:
                 break
             random.shuffle(testcase.inputStrings)
-            testCaseResult, testCaseSolution = checkTestCaseOptimized(len(testcase.inputStrings),
+            testCaseResult, testCaseSolution = checkTestCase(len(testcase.inputStrings),
                                                 testcase.inputStrings,
                                                 testcase.answer,
                                                 testcase.alphabet,
                                                 testcase.maxDistance)
             if testCaseResult:
-                # print("Failed before, now works! Hurray! ")
                 numCasesSaved += 1
                 break
             timesToTryAgain += 1
@@ -711,14 +439,12 @@ def compare_algorithms(testcases):
     numCases = 0
     for testcase in testcases:
         numCases += 1
-        #print("Csd: ", numCases)
         fixedParameterAlgoSolution = CSd(testcase.inputStrings,
                                        testcase.maxDistance,
                                        testcase.inputStrings[0],
                                        testcase.maxDistance)
         if fixedParameterAlgoSolution != NOT_FOUND:
             fixedParameterAlgoSuccessCount += 1
-        #print(fixedParameterAlgoSuccessCount)
     fixedParameterAlgoEndTime = timeit.default_timer()
     print("closestStringAnswerDists:", closestStringAnswerDists)
     print("closestStringSolutionDists:", closestStringSolutionDists)
@@ -733,131 +459,12 @@ def compare_algorithms(testcases):
           fixedParameterAlgoEndTime - fixedParameterAlgoStartTime)
 
 
-def compare_closest_algorithms(testcases):
-    closestStringAnswerDists = []
-    closestStringSolutionDists = []
-
-    numCases = 0
-    numCasesFailed = 0
-    numCasesSaved = 0
-
-    closestStringAlgoStartTime = timeit.default_timer()
-    closestStringAlgoSuccessCount = 0
-    for testcase in testcases:
-        testCaseResult, testCaseSolution = checkTestCase(len(testcase.inputStrings),
-                                   testcase.inputStrings,
-                                   testcase.answer,
-                                   testcase.alphabet,
-                                   testcase.maxDistance)
-        # print("done")
-        numCases += 1
-        #print("ClosestString: ", numCases)
-        if testCaseResult is False:
-            numCasesFailed += 1
-
-        timesToTryAgain = 0
-        while testCaseResult is False and timesToTryAgain <= 10:
-            random.shuffle(testcase.inputStrings)
-            testCaseResult, testCaseSolution = checkTestCase(len(testcase.inputStrings),
-                                       testcase.inputStrings,
-                                       testcase.answer,
-                                       testcase.alphabet,
-                                       testcase.maxDistance)
-            if testCaseResult:
-                # print("Failed before, now works! Hurray! ")
-                numCasesSaved += 1
-                break
-            timesToTryAgain += 1
-    closestStringAlgoEndTime = timeit.default_timer()
-
-    numCases2 = 0
-    numCasesFailed2 = 0
-    numCasesSaved2 = 0
-    closestStringAlgoStartTime2 = timeit.default_timer()
-    closestStringAlgoSuccessCount2 = 0
-    for testcase in testcases:
-        testCaseResult, testCaseSolution = checkTestCaseOptimized(len(testcase.inputStrings),
-                                   testcase.inputStrings,
-                                   testcase.answer,
-                                   testcase.alphabet,
-                                   testcase.maxDistance)
-        # print("done")
-        numCases2 += 1
-        #print("ClosestStringOptimized: ", numCases2)
-        if testCaseResult is False:
-            numCasesFailed2 += 1
-
-        timesToTryAgain = 0
-        while testCaseResult is False and timesToTryAgain <= 10:
-            random.shuffle(testcase.inputStrings)
-            testCaseResult, testCaseSolution = checkTestCaseOptimized(len(testcase.inputStrings),
-                                                testcase.inputStrings,
-                                                testcase.answer,
-                                                testcase.alphabet,
-                                                testcase.maxDistance)
-            if testCaseResult:
-                # print("Failed before, now works! Hurray! ")
-                numCasesSaved2 += 1
-                break
-            timesToTryAgain += 1
-    closestStringAlgoEndTime2 = timeit.default_timer()
-
-    # optimized version 2
-    numCases3 = 0
-    numCasesFailed3 = 0
-    numCasesSaved3 = 0
-    closestStringAlgoStartTime3 = timeit.default_timer()
-    closestStringAlgoSuccessCount3 = 0
-    for testcase in testcases:
-        testCaseResult, testCaseSolution = checkTestCaseOptimized2(len(testcase.inputStrings),
-                                                                  testcase.inputStrings,
-                                                                  testcase.answer,
-                                                                  testcase.alphabet,
-                                                                  testcase.maxDistance)
-        # print("done")
-        numCases3 += 1
-        #print("ClosestStringOptimized: ", numCases3)
-        if testCaseResult is False:
-            numCasesFailed3 += 1
-
-        timesToTryAgain = 0
-        while testCaseResult is False and timesToTryAgain <= 10:
-            random.shuffle(testcase.inputStrings)
-            testCaseResult, testCaseSolution = checkTestCaseOptimized2(len(testcase.inputStrings),
-                                                                      testcase.inputStrings,
-                                                                      testcase.answer,
-                                                                      testcase.alphabet,
-                                                                      testcase.maxDistance)
-            if testCaseResult:
-                # print("Failed before, now works! Hurray! ")
-                numCasesSaved3 += 1
-                break
-            timesToTryAgain += 1
-    closestStringAlgoEndTime3 = timeit.default_timer()
-
-    print("Closest String Algorithm Execute Time (%d tests)" % len(testcases),
-          closestStringAlgoEndTime - closestStringAlgoStartTime)
-    print("Out of", len(testcases), "test cases", numCasesFailed, "cases failed.")
-    print("Saved cases: ", numCasesSaved)
-    print("-----")
-
-    print("Closest String Algorithm Optimized Execute Time (%d tests)" % len(testcases),
-          closestStringAlgoEndTime2 - closestStringAlgoStartTime2)
-    print("Out of", len(testcases), "test cases", numCasesFailed2, "cases failed.")
-    print("Saved cases: ", numCasesSaved2)
-
-    print("Closest String Algorithm Optimized (2) Execute Time (%d tests)" % len(testcases),
-          closestStringAlgoEndTime3 - closestStringAlgoStartTime3)
-    print("Out of", len(testcases), "test cases", numCasesFailed3, "cases failed.")
-    print("Saved cases: ", numCasesSaved3)
-
-
 def compare_closest_algorithm_with_ant(testcases):
     results = []
     totalHammingDistance = 0
     for i in range(len(testcases)):
         testcase = testcases[i]
-        testCaseResult, testCaseSolution = checkTestCaseOptimized(len(testcase.inputStrings),
+        testCaseResult, testCaseSolution = checkTestCase(len(testcase.inputStrings),
                                                          testcase.inputStrings,
                                                          testcase.answer,
                                                          testcase.alphabet,
@@ -865,7 +472,7 @@ def compare_closest_algorithm_with_ant(testcases):
         timesToTryAgain = 0
         while testCaseResult is False and timesToTryAgain < 199:
             random.shuffle(testcase.inputStrings)
-            testCaseResult, testCaseSolution = checkTestCaseOptimized(
+            testCaseResult, testCaseSolution = checkTestCase(
                 len(testcase.inputStrings),
                 testcase.inputStrings,
                 testcase.answer,
@@ -888,41 +495,31 @@ def compare_closest_algorithm_with_ant(testcases):
     df.to_excel("to_ant.xlsx", index=False)
 
 
-def generate_comparison_data(filename):
-    alphabet = ["a", "b", "c", "d"]
-    """
-    alphabet = ["a", "b", "c", "d", "e",
-                "f", "g", "h", "i", "j",
-                "k", "l", "m", "n", "o",
-                "p", "q", "r", "s", "t"
-                ]
-    """
-    totalCases = 1000
-    numStringsList = [10, 20, 40, 80, 160]
-    # numStringsList = [10]
-    hammingDistList = [5, 10, 20, 40, 60, 80]
-    # hammingDistList = [60]
-    stringLengthList = [20, 40, 60, 80, 120, 160, 180, 320]
-    # stringLengthList = [20, 40, 60, 80, 100, 120, 140, 160, 180, 200]
-    # stringLengthList = [180]
+def generate_comparison_data(filename, excel_filename):
+    alphabet = TEST_CONFIGURATION['alphabet']
+    totalCases = TEST_CONFIGURATION['totalCases']
+    numStringsList = TEST_CONFIGURATION['K']
+    hammingDistList = TEST_CONFIGURATION['d']
+    stringLengthList = TEST_CONFIGURATION['L']
+    maxTries = TEST_CONFIGURATION['maxTries']
+    configuration_df = pd.DataFrame(TEST_CONFIGURATION.items())
+
+    testcase_dir = filename
+    os.chdir(testcase_dir)
 
     allResults = []
     for numStrings in numStringsList:
         for ham in hammingDistList:
             for s in stringLengthList:
-                if ham > s/3:
+                if skipTest(alphabet, numStrings, ham, s):
                     continue
 
                 print("numStrings = %d, hamming distance=%d, string length=%d" % (numStrings, ham, s))
-                testCases = create_working_testcases(alphabet, numStrings, s, ham, totalCases)
-                testCase_filename = "testcase_%d_%d_%d" % (numStrings, ham, s)
-                save_testcases_to_file(testCases, testCase_filename)
-                testCase_ant_dir = testCase_filename+"_ant"
-                try:
-                    os.mkdir(testCase_ant_dir)
-                except FileExistsError:
-                    pass
-                save_testcases_to_ant_instance_files(testCases, os.path.join(testCase_ant_dir, testCase_filename))
+                testCase_filename = "%s_testcase_%d_%d_%d" % (filename, numStrings, ham, s)
+                testCases = load_testcases_from_file(testCase_filename)
+
+                testCaseExcel = testCase_filename + "_WFC_CSP_maxTries_%d.xlsx" % TEST_CONFIGURATION['maxTries']
+                testCaseStats = []
                 numCases = 0
                 numCasesFailed = 0
                 numCasesSaved = 0
@@ -932,19 +529,25 @@ def generate_comparison_data(filename):
                 closestStringAlgoStartTime = timeit.default_timer()
                 while numCases < totalCases:
                     testCase = testCases[numCases]
-                    testCaseResult, testCaseSolution = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-                    timesToTryAgain = 0
-                    while testCaseResult is False and timesToTryAgain < 199:
-                        if timesToTryAgain == 0:
-                            numCasesFailed += 1
-                        random.shuffle(testCase.inputStrings)
-                        testCaseResult, testCaseSolution = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+                    testCaseResult, testCaseSolution = checkTestCase(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+                    if testCaseResult is False:
+                        numCasesFailed += 1
 
-                        if testCaseResult == True:
-                            #print("Failed before, now works! Hurray! ")
+                    tries = 1
+                    while testCaseResult is False and tries < maxTries:
+                        tries += 1
+                        random.shuffle(testCase.inputStrings)
+                        testCaseResult, testCaseSolution = checkTestCase(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
+
+                        if testCaseResult is True:
                             numCasesSaved += 1
                             break
-                        timesToTryAgain += 1
+
+                    testCaseStat = dict()
+                    testCaseStat["Testcase No."] = numCases
+                    testCaseStat["Tries"] = tries
+                    testCaseStats.append(testCaseStat)
+
                     numCases += 1
                     maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testCase.inputStrings,
                                                                   testCaseSolution)
@@ -964,130 +567,29 @@ def generate_comparison_data(filename):
                 result["Total"] = totalCases
                 result["Failed"] = numCasesFailed
                 result["Saved"] = numCasesSaved
-                result["Average Max Solution Distance"] = closestStringAverageMaxSolutionDistance
+                result["Average Max Solution Distance/d"] = closestStringAverageMaxSolutionDistance
+                result["Average Max Solution Distance"] = closestStringAverageMaxSolutionDistance * ham
                 result["Average Avg Solution Distance"] = closestStringAverageAvgSolutionDistance
                 result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
+                print(result)
                 allResults.append(result)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
                 print("Average Max Answer Distance=%f and Average Avg Solution Distance=%f" % (closestStringAverageMaxSolutionDistance, closestStringAverageAvgSolutionDistance))
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
-                df.to_excel(filename, index=False)
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance/d", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
+                with pd.ExcelWriter(excel_filename) as excelWriter:
+                    df.to_excel(excelWriter, index=False)
+                    configuration_df.to_excel(excelWriter, sheet_name="README", index=False)
+
+                testCaseStats_df = pd.DataFrame(testCaseStats, columns=["Testcase No.", "Tries"])
+                testCaseStats_df.to_excel(testCaseExcel, index=False)
 
                 """
-                # WFC-CSP optimized
-                numCases = 0
-                numCasesFailed = 0
-                numCasesSaved = 0
-
-                closestStringMaxSolutionDists = []
-                closestStringAvgSolutionDists = []
-                closestStringAlgoStartTime = timeit.default_timer()
-                while numCases < totalCases:
-                    testCase = testCases[numCases]
-                    testCaseResult, testCaseSolution = checkTestCaseOptimized2(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-                    timesToTryAgain = 0
-                    while testCaseResult is False and timesToTryAgain < 199:
-                        if timesToTryAgain == 0:
-                            numCasesFailed += 1
-                        random.shuffle(testCase.inputStrings)
-                        testCaseResult, testCaseSolution = checkTestCaseOptimized2(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-
-                        if testCaseResult:
-                            #print("Failed before, now works! Hurray! ")
-                            numCasesSaved += 1
-                            break
-                        timesToTryAgain += 1
-                    numCases += 1
-                    maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testCase.inputStrings,
-                                                                  testCaseSolution)
-                    closestStringMaxSolutionDists.append(maxSolutionDist)
-                    closestStringAvgSolutionDists.append(avgDist)
-                closestStringAlgoEndTime = timeit.default_timer()
-
-                closestStringAverageMaxSolutionDistance = sum(closestStringMaxSolutionDists) / float(totalCases * ham)
-                closestStringAverageAvgSolutionDistance = sum(closestStringAvgSolutionDists) / float(totalCases * ham)
-
-                result = dict()
-                result["Algorithm"] = "WFC-CSP-Optimized"
-                result["Alphabet Size"] = len(alphabet)
-                result["k"] = numStrings
-                result["d"] = ham
-                result["L"] = s
-                result["Time"] = (closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
-                result["Total"] = totalCases
-                result["Failed"] = numCasesFailed
-                result["Saved"] = numCasesSaved
-                result["Average Max Solution Distance"] = closestStringAverageMaxSolutionDistance
-                result["Average Avg Solution Distance"] = closestStringAverageAvgSolutionDistance
-                result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
-                print(result)
-                allResults.append(result)
-                print("Closest String Algorithm Optimized Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
-                print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
-                print("Average Max Answer Distance=%f and Average Avg Solution Distance=%f" % (closestStringAverageMaxSolutionDistance, closestStringAverageAvgSolutionDistance))
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
-                df.to_excel(filename, index=False)
-
-                # WFC-CSP optimized with original retry
-                numCases = 0
-                numCasesFailed = 0
-                numCasesSaved = 0
-
-                closestStringMaxSolutionDists = []
-                closestStringAvgSolutionDists = []
-                closestStringAlgoStartTime = timeit.default_timer()
-                while numCases < totalCases:
-                    testCase = testCases[numCases]
-                    testCaseResult, testCaseSolution = checkTestCaseOptimized2(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-                    timesToTryAgain = 0
-                    while testCaseResult is False and timesToTryAgain < 199:
-                        if timesToTryAgain == 0:
-                            numCasesFailed += 1
-                        random.shuffle(testCase.inputStrings)
-                        testCaseResult, testCaseSolution = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-
-                        if testCaseResult:
-                            #print("Failed before, now works! Hurray! ")
-                            numCasesSaved += 1
-                            break
-                        timesToTryAgain += 1
-                    numCases += 1
-                    maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testCase.inputStrings,
-                                                                  testCaseSolution)
-                    closestStringMaxSolutionDists.append(maxSolutionDist)
-                    closestStringAvgSolutionDists.append(avgDist)
-                closestStringAlgoEndTime = timeit.default_timer()
-
-                closestStringAverageMaxSolutionDistance = sum(closestStringMaxSolutionDists) / float(totalCases * ham)
-                closestStringAverageAvgSolutionDistance = sum(closestStringAvgSolutionDists) / float(totalCases * ham)
-
-                result = dict()
-                result["Algorithm"] = "WFC-CSP-Optimized-Original-Retry"
-                result["Alphabet Size"] = len(alphabet)
-                result["k"] = numStrings
-                result["d"] = ham
-                result["L"] = s
-                result["Time"] = (closestStringAlgoEndTime - closestStringAlgoStartTime) / totalCases
-                result["Total"] = totalCases
-                result["Failed"] = numCasesFailed
-                result["Saved"] = numCasesSaved
-                result["Average Max Solution Distance"] = closestStringAverageMaxSolutionDistance
-                result["Average Avg Solution Distance"] = closestStringAverageAvgSolutionDistance
-                result["Success Rate"] = (totalCases - numCasesFailed + numCasesSaved) / totalCases
-                print(result)
-                allResults.append(result)
-                print("Closest String Algorithm Optimized Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
-                print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
-                print("Average Max Solution Distance=%f and Average Avg Solution Distance=%f" % (closestStringAverageMaxSolutionDistance, closestStringAverageAvgSolutionDistance))
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
-                df.to_excel(filename, index=False)
-                """
-
                 # Fixed Position (CSD) algorithm
                 if ham > 10:
-                    # skip CSD algorithm if hamming distance > 15
+                    # skip CSD algorithm if hamming distance > 10
                     continue
+                
                 if ham == 10 and s > 80:
                     continue
 
@@ -1098,14 +600,12 @@ def generate_comparison_data(filename):
                 numCases = 0
                 for testcase in testCases:
                     numCases += 1
-                    # print("Csd: ", numCases)
                     fixedParameterAlgoSolution = CSd(testcase.inputStrings,
                                                    testcase.maxDistance,
                                                    testcase.inputStrings[0],
                                                    testcase.maxDistance)
                     if fixedParameterAlgoSolution != NOT_FOUND:
                         fixedParameterAlgoSuccessCount += 1
-                    # print(fixedParameterAlgoSuccessCount)
                     maxSolutionDist, avgDist = getHammingDistanceMaxAndAvg(testcase.inputStrings,
                                                                   fixedParameterAlgoSolution)
                     fixedParameterMaxSolutionDists.append(maxSolutionDist)
@@ -1124,7 +624,8 @@ def generate_comparison_data(filename):
                 result["Total"] = totalCases
                 result["Failed"] = totalCases - fixedParameterAlgoSuccessCount
                 result["Saved"] = 0
-                result["Average Max Solution Distance"] = fixedParameterAverageMaxSolutionDistance
+                result["Average Max Solution Distance/d"] = fixedParameterAverageMaxSolutionDistance
+                result["Average Max Solution Distance"] = fixedParameterAverageMaxSolutionDistance * ham
                 result["Average Avg Solution Distance"] = fixedParameterAverageAvgSolutionDistance
                 result["Success Rate"] = fixedParameterAlgoSuccessCount / totalCases
 
@@ -1132,8 +633,40 @@ def generate_comparison_data(filename):
                 print()
                 allResults.append(result)
 
-                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
-                df.to_excel(filename, index=False)
+                df = pd.DataFrame(allResults, columns=["Algorithm", "Alphabet Size", "k", "d", "L", "Time", "Total", "Failed", "Saved", "Average Max Solution Distance/d", "Average Max Solution Distance", "Average Avg Solution Distance", "Success Rate"])
+                with pd.ExcelWriter(excel_filename) as excelWriter:
+                    df.to_excel(excelWriter, index=False)
+                    configuration_df.to_excel(excelWriter, sheet_name="README", index=False)
+                """
+
+
+def generate_comparison_testcases(filename):
+    alphabet = TEST_CONFIGURATION['alphabet']
+    totalCases = TEST_CONFIGURATION['totalCases']
+    numStringsList = TEST_CONFIGURATION['K']
+    hammingDistList = TEST_CONFIGURATION['d']
+    stringLengthList = TEST_CONFIGURATION['L']
+
+    testcase_dir = filename
+    os.mkdir(testcase_dir)
+    os.chdir(testcase_dir)
+
+    for numStrings in numStringsList:
+        for ham in hammingDistList:
+            for s in stringLengthList:
+                if skipTest(alphabet, numStrings, ham, s):
+                    continue
+
+                print("numStrings = %d, hamming distance=%d, string length=%d" % (numStrings, ham, s))
+                testCases = create_working_testcases(alphabet, numStrings, s, ham, totalCases)
+                testCase_filename = "%s_testcase_%d_%d_%d" % (filename, numStrings, ham, s)
+                save_testcases_to_file(testCases, testCase_filename)
+                testCase_ant_dir = testCase_filename+"_ant"
+                try:
+                    os.mkdir(testCase_ant_dir)
+                except FileExistsError:
+                    pass
+                save_testcases_to_ant_instance_files(testCases, os.path.join(testCase_ant_dir, testCase_filename))
 
 
 def plot_figures(filename):
@@ -1282,32 +815,24 @@ def main_comaprison_plot():
                 closestStringAlgoStartTime = timeit.default_timer()
                 while numCases < totalCases:
                     testCase = testCases[numCases]
-                    #(numStrings, inputStrings[numCases], answers[numCases],
-                                                   #alphabet, k)
-                    caseResult = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-                    #print("done")
+                    caseResult = checkTestCase(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
                     timesToTryAgain = 0
-                    #while caseResult == False and timesToTryAgain <= math.factorial(stringLength):
                     while caseResult is False and timesToTryAgain <= 1:
                         if timesToTryAgain == 0:
                             numCasesFailed += 1
                         random.shuffle(inputStrings)
-                        caseResult = checkTestCaseOptimized(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
-
+                        caseResult = checkTestCase(testCase.numStrings, testCase.inputStrings, testCase.answer, testCase.alphabet, testCase.maxDistance)
                         if caseResult == True:
-                            #print("Failed before, now works! Hurray! ")
                             numCasesSaved += 1
                             break
                         timesToTryAgain += 1
                     numCases += 1
                 closestStringAlgoEndTime = timeit.default_timer()
                 smallList = [ham, s, closestStringAlgoEndTime-closestStringAlgoStartTime]
-                #print(smallList)
                 grandList.append(smallList)
                 print("Closest String Algorithm Execute Time (%d tests)" % totalCases, closestStringAlgoEndTime - closestStringAlgoStartTime)
                 print("numStrings=%d Hamming Distance=%d StringLength=%d: failed %d, saved %d" % (numStrings, ham, s, numCasesFailed, numCasesSaved))
                 print()
-            #print(grandList)
             xAxis = [row[1] for row in grandList]
             yAxis = [row[2]/totalCases for row in grandList]
             label = "%d strings, Hamming distance %d " % (numStrings, ham)
@@ -1351,13 +876,6 @@ def main():
             testcases = load_testcases_from_file(filename)
             compare_algorithms(testcases)
 
-        elif sys.argv[1] == "--compare-closest-string":
-            assert len(
-                sys.argv) == 3, "Need filename to load generated testcases"
-            filename = sys.argv[2]
-            testcases = load_testcases_from_file(filename)
-            compare_closest_algorithms(testcases)
-
         elif sys.argv[1] == "--compare-with-ant":
             assert len(
                 sys.argv) == 3, "Need filename to load generated testcases"
@@ -1368,9 +886,19 @@ def main():
 
         elif sys.argv[1] == "--generate-comparison-data":
             assert len(
-                sys.argv) == 3, "Need filename (.xlsx) to load generated testcases"
+                sys.argv) >= 3, "Need filename (.xlsx) to load generated testcases"
             filename = sys.argv[2]
-            generate_comparison_data(filename)
+            excel_filename = filename + ".xlsx"
+            if len(sys.argv) == 4:
+                excel_filename = sys.argv[3]
+                if not excel_filename.endswith(".xlsx"):
+                    excel_filename = excel_filename + ".xlsx"
+            generate_comparison_data(filename, excel_filename)
+        elif sys.argv[1] == "--generate-comparison-testcases":
+            assert len(
+                sys.argv) == 3, "Need filename prefix to save generated testcases"
+            filename = sys.argv[2]
+            generate_comparison_testcases(filename)
         elif sys.argv[1] == "--plot":
             assert len(
                 sys.argv) == 3, "Need filename (.xlsx) to load generated testcases"
